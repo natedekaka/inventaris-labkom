@@ -9,8 +9,12 @@ App::requireRole('admin');
 $title = 'Manajemen User';
 $db = db();
 
-if (isset($_GET['hapus'])) {
-    $hapus_id = (int)$_GET['hapus'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    if (!App::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        App::setFlash('Invalid request', 'danger');
+        App::redirect('/users/');
+    }
+    $hapus_id = (int)$_POST['delete_id'];
     if ($hapus_id == $_SESSION['user_id']) {
         App::setFlash('Tidak bisa menghapus akun sendiri', 'danger');
     } else {
@@ -70,7 +74,7 @@ ob_start();
                         <td class="py-4 px-6">
                             <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
                             <?php if ($row['id'] != $_SESSION['user_id']): ?>
-                            <a href="?hapus=<?= $row['id'] ?>" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block" onclick="return confirm('Hapus user ini?')">Hapus</a>
+                            <button type="button" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, '<?= addslashes($row['nama']) ?>')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
                             <?php endif; ?>
                         </td>
                     </tr>

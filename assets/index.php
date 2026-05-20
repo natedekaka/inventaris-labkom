@@ -92,7 +92,7 @@ ob_start();
                         <td class="py-4 px-6">
                             <a href="detail.php?id=<?= $row['id'] ?>" class="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded text-sm inline-block">Detail</a>
                             <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
-                            <a href="hapus.php?id=<?= $row['id'] ?>" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block" onclick="return confirm('Hapus?')">Hapus</a>
+                            <button type="button" onclick="openDeleteModal('hapus.php', <?= $row['id'] ?>, '<?= addslashes($row['nama_barang']) ?>')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
                         </td>
                     </tr>
                     <?php endwhile; ?>

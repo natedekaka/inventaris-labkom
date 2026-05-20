@@ -11,7 +11,7 @@ $db = db();
 $check_admin = $db->query("SELECT * FROM users WHERE role = 'admin' LIMIT 1");
 if ($check_admin && $check_admin->num_rows === 0) {
     $default_password = password_hash('admin123', PASSWORD_DEFAULT);
-    $stmt = $db->prepare("INSERT INTO users (nama, role, password) VALUES ('Admin', 'admin', ?)");
+    $stmt = $db->prepare("INSERT INTO users (nama, role, password) VALUES ('admin', 'admin', ?)");
     $stmt->bind_param('s', $default_password);
     $stmt->execute();
 }
@@ -43,6 +43,8 @@ if ($user = $result->fetch_assoc()) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['nama'] = $user['nama'];
         $_SESSION['role'] = $user['role'];
+        session_regenerate_id(true);
+        session_write_close();
         App::setFlash('Login berhasil', 'success');
         App::redirect('/');
     }

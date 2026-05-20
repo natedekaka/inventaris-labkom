@@ -9,8 +9,12 @@ App::requireLogin();
 $title = 'Daftar Maintenance';
 $db = db();
 
-if (isset($_GET['hapus'])) {
-    $hapus_id = (int)$_GET['hapus'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    if (!App::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        App::setFlash('Invalid request', 'danger');
+        App::redirect('/maintenances/');
+    }
+    $hapus_id = (int)$_POST['delete_id'];
     $stmt = $db->prepare("SELECT asset_id FROM maintenances WHERE id = ?");
     $stmt->bind_param('i', $hapus_id);
     $stmt->execute();
@@ -79,7 +83,7 @@ ob_start();
                     </td>
                     <td class="py-4 px-6">
                         <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
-                        <a href="index.php?hapus=<?= $row['id'] ?>" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block" onclick="return confirm('Yakin hapus?')">Hapus</a>
+                        <button type="button" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, '<?= addslashes($row['nama_aset']) ?>')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
                     </td>
                 </tr>
                 <?php endwhile; ?>

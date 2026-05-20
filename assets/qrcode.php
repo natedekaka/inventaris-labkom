@@ -21,7 +21,10 @@ if (!$asset) {
     App::redirect('/assets/');
 }
 
-$qrUrl = generateQRCode("http://{$_SERVER['HTTP_HOST']}/assets/detail.php?id={$asset['id']}", 300);
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$allowedHosts = ['localhost', '127.0.0.1', $_SERVER['SERVER_NAME'] ?? ''];
+$host = in_array($_SERVER['HTTP_HOST'], $allowedHosts) ? $_SERVER['HTTP_HOST'] : 'localhost';
+$qrUrl = generateQRCode("{$protocol}://{$host}/assets/detail.php?id={$asset['id']}", 300);
 
 ob_start();
 ?>

@@ -43,7 +43,8 @@ function getRecentAssets($limit = 5) {
 function getOverdueBorrowings() {
     $conn = Database::getInstance()->getConnection();
     $stmt = $conn->prepare("
-        SELECT b.*, a.kode_aset, a.nama_barang as nama_aset, u.nama as nama_peminjam
+        SELECT b.*, a.kode_aset, a.nama_barang as nama_aset, u.nama as nama_peminjam,
+               DATEDIFF(CURDATE(), b.rencana_kembali) as hari_terlambat
         FROM borrowings b
         JOIN assets a ON b.asset_id = a.id
         JOIN users u ON b.user_id = u.id

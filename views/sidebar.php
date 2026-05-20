@@ -2,6 +2,10 @@
 <aside class="bg-white w-64 min-h-screen shadow-lg fixed left-0 top-0 pt-16 hidden md:block">
     <div class="p-4">
         <nav class="space-y-2">
+            <a href="/profile/" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-primary transition duration-200 <?php echo strpos($_SERVER['PHP_SELF'], '/profile/') !== false ? 'bg-blue-50 text-primary font-semibold' : ''; ?>">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>Profil Saya</span>
+            </a>
             <a href="/" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-primary transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' && dirname($_SERVER['PHP_SELF']) == '/' ? 'bg-blue-50 text-primary font-semibold' : ''; ?>">
                 <i class="fas fa-tachometer-alt w-5"></i>
                 <span>Dashboard</span>

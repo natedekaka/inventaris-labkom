@@ -77,8 +77,12 @@ ob_start();
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <?php while ($asset = $result->fetch_assoc()): 
-                $qrUrl = "http://{$_SERVER['HTTP_HOST']}/assets/detail.php?id={$asset['id']}";
+            <?php 
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $allowedHosts = ['localhost', '127.0.0.1', $_SERVER['SERVER_NAME'] ?? ''];
+            $host = in_array($_SERVER['HTTP_HOST'], $allowedHosts) ? $_SERVER['HTTP_HOST'] : 'localhost';
+            while ($asset = $result->fetch_assoc()): 
+                $qrUrl = "{$protocol}://{$host}/assets/detail.php?id={$asset['id']}";
                 $qrImageUrl = generateQRCode("{$asset['kode_aset']}|{$asset['nama_barang']}|{$asset['id']}", 150);
             ?>
             <div class="border rounded-lg p-4 text-center break-inside-avoid">
