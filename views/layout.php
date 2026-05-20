@@ -86,7 +86,7 @@
                     <a href="/profile/" class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary">
                         <i class="fas fa-user-circle mr-1"></i><?= htmlspecialchars($_SESSION['nama'] ?? 'User') ?>
                     </a>
-                    <a href="logout.php" class="text-red-600 hover:text-red-800">Logout</a>
+                    <a href="/logout.php" class="text-red-600 hover:text-red-800">Logout</a>
                 </div>
                 <button class="md:hidden" onclick="toggleMenu()">
                     <i class="fas fa-bars text-xl dark:text-white"></i>
@@ -213,7 +213,7 @@
                         return;
                     }
                     searchTimeout = setTimeout(function() {
-                        fetch('search.php?q=' + encodeURIComponent(q))
+                        fetch('/search.php?q=' + encodeURIComponent(q))
                             .then(function(res) { return res.json(); })
                             .then(function(data) {
                                 searchDropdown.innerHTML = '';
@@ -272,7 +272,7 @@
 
             // ===== OVERDUE NOTIFICATION =====
             function fetchOverdueCount() {
-                fetch('overdue_count.php')
+                fetch('/overdue_count.php')
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         var badge = document.getElementById('overdueBadge');
