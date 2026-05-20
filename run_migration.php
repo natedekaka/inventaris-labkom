@@ -20,14 +20,26 @@ CREATE TABLE IF NOT EXISTS asset_logs (
 if ($db->query($sql)) {
     echo "SUCCESS: asset_logs table created.\n";
 } else {
-    echo "ERROR: " . $db->error . "\n";
+    echo "ERROR asset_logs: " . $db->error . "\n";
 }
+
+$sql = "ALTER TABLE users MODIFY COLUMN role ENUM('admin','lab_assistant','guru','siswa','viewer','operator','user') DEFAULT 'user'";
+if ($db->query($sql)) {
+    echo "SUCCESS: ENUM expanded with viewer, operator, user (temporary).\n";
+} else {
+    echo "ERROR ENUM expand: " . $db->error . "\n";
+}
+
+$db->query("UPDATE users SET role = 'viewer' WHERE role = 'guru'");
+$db->query("UPDATE users SET role = 'user' WHERE role = 'siswa'");
+$affected = $db->affected_rows;
+echo "INFO: Existing roles migrated (guru->viewer, siswa->user).\n";
 
 $sql = "ALTER TABLE users MODIFY COLUMN role ENUM('admin','user','lab_assistant','viewer','operator') DEFAULT 'user'";
 if ($db->query($sql)) {
-    echo "SUCCESS: role ENUM updated with viewer and operator.\n";
+    echo "SUCCESS: role ENUM cleaned up (removed guru, siswa).\n";
 } else {
-    echo "ERROR: " . $db->error . "\n";
+    echo "ERROR ENUM cleanup: " . $db->error . "\n";
 }
 
 $sql = "CREATE TABLE IF NOT EXISTS permissions (
@@ -39,5 +51,7 @@ $sql = "CREATE TABLE IF NOT EXISTS permissions (
 if ($db->query($sql)) {
     echo "SUCCESS: permissions table created.\n";
 } else {
-    echo "ERROR: " . $db->error . "\n";
+    echo "ERROR permissions: " . $db->error . "\n";
 }
+
+echo "\n✅ Migrasi selesai. Silakan login dengan username: admin | password: admin123\n";
