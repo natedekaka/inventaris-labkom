@@ -6,6 +6,8 @@ require_once __DIR__ . '/core/App.php';
 require_once __DIR__ . '/core/functions.php';
 require_once __DIR__ . '/dashboard/stats.php';
 
+App::requireLogin();
+
 $role = $_SESSION['role'] ?? 'user';
 $userId = $_SESSION['user_id'] ?? 0;
 
