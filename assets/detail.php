@@ -1,0 +1,136 @@
+<?php
+require_once __DIR__ . '/../config/init_sekolah.php';
+require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../core/App.php';
+require_once __DIR__ . '/../core/functions.php';
+
+App::requireLogin();
+
+$title = 'Detail Aset';
+$db = db();
+$id = (int)($_GET['id'] ?? 0);
+
+$stmt = $db->prepare("SELECT a.*, c.nama_kategori as category_name, l.nama_lokasi as location_name 
+                      FROM assets a 
+                      LEFT JOIN categories c ON a.category_id = c.id 
+                      LEFT JOIN locations l ON a.location_id = l.id 
+                      WHERE a.id = ?");
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$asset = $result->fetch_assoc();
+
+if (!$asset) {
+    App::setFlash('Aset tidak ditemukan', 'danger');
+    App::redirect('/assets/');
+}
+
+ob_start();
+?>
+<div class="max-w-4xl mx-auto px-4">
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">Detail Aset - <?= sanitize($asset['kode_aset'] . ' - ' . $asset['nama_barang']) ?></h3>
+        
+        <?php if ($asset['foto']): ?>
+        <img src="../uploads/<?= $asset['foto'] ?>" class="max-w-full h-auto mb-6" style="max-width: 300px;">
+        <?php endif; ?>
+        
+        <table class="w-full border-collapse">
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Kode Aset</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['kode_aset']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Nama Barang</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['nama_barang']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Kategori</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['category_name']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Lokasi</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['location_name']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Merek</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['merek']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Model</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['model']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Serial Number</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['serial_number']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Spesifikasi</th><td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($asset['spesifikasi']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Harga</th><td class="py-3 px-4 text-sm text-gray-900"><?= formatRupiah($asset['harga']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Tanggal Beli</th><td class="py-3 px-4 text-sm text-gray-900"><?= formatTanggal($asset['tanggal_beli']) ?></td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Kondisi</th><td class="py-3 px-4">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $asset['kondisi'] === 'baik' ? 'bg-green-100 text-green-800' : ($asset['kondisi'] === 'rusak_ringan' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                    <?= sanitize($asset['kondisi']) ?>
+                </span>
+            </td></tr>
+            <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Status</th><td class="py-3 px-4">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $asset['status'] === 'tersedia' ? 'bg-green-100 text-green-800' : ($asset['status'] === 'dipinjam' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                    <?= sanitize($asset['status']) ?>
+                </span>
+            </td></tr>
+        </table>
+        
+        <div class="flex gap-2 mt-6">
+            <a href="/assets/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Kembali</a>
+            <a href="edit.php?id=<?= $asset['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition duration-200">Edit</a>
+            <a href="qrcode.php?id=<?= $asset['id'] ?>" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition duration-200">QR Code</a>
+        </div>
+    </div>
+    
+    <!-- Asset History Timeline -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8 mt-8">
+        <h4 class="text-lg font-bold text-gray-800 mb-6">Riwayat Aset</h4>
+        <?php
+        $tableCheck = $db->query("SHOW TABLES LIKE 'asset_logs'");
+        
+        if ($tableCheck && $tableCheck->num_rows > 0) {
+            $logStmt = $db->prepare("
+                SELECT al.*, u.nama as user_nama, u.role
+                FROM asset_logs al
+                LEFT JOIN users u ON al.user_id = u.id
+                WHERE al.asset_id = ?
+                ORDER BY al.created_at DESC
+                LIMIT 50
+            ");
+            $logStmt->bind_param('i', $id);
+            $logStmt->execute();
+            $logResult = $logStmt->get_result();
+        } else {
+            $logResult = null;
+        }
+        
+        $actionIcons = [
+            'borrow_requested' => ['icon' => 'fa-hand-point-right', 'color' => 'text-yellow-600', 'label' => 'Permintaan Pinjam'],
+            'borrow_approved' => ['icon' => 'fa-check-circle', 'color' => 'text-green-600', 'label' => 'Pinjam Disetujui'],
+            'borrowed' => ['icon' => 'fa-arrow-right', 'color' => 'text-blue-600', 'label' => 'Dipinjam'],
+            'returned' => ['icon' => 'fa-undo', 'color' => 'text-green-600', 'label' => 'Dikembalikan'],
+            'maintenance_created' => ['icon' => 'fa-tools', 'color' => 'text-orange-600', 'label' => 'Maintenance Dibuat'],
+            'maintenance_completed' => ['icon' => 'fa-check-double', 'color' => 'text-green-600', 'label' => 'Maintenance Selesai'],
+            'status_changed' => ['icon' => 'fa-exchange-alt', 'color' => 'text-purple-600', 'label' => 'Status Berubah'],
+            'condition_changed' => ['icon' => 'fa-heartbeat', 'color' => 'text-red-600', 'label' => 'Kondisi Berubah'],
+            'created' => ['icon' => 'fa-plus-circle', 'color' => 'text-blue-600', 'label' => 'Aset Dibuat']
+        ];
+        ?>
+        
+        <?php if ($logResult && $logResult->num_rows > 0): ?>
+            <div class="relative">
+                <?php while ($log = $logResult->fetch_assoc()): ?>
+                    <div class="flex items-start mb-6 last:mb-0">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+                            <i class="fas <?= $actionIcons[$log['action']]['icon'] ?? 'fa-circle' ?> <?= $actionIcons[$log['action']]['color'] ?? 'text-gray-600' ?>"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-semibold text-gray-800">
+                                    <?= $actionIcons[$log['action']]['label'] ?? $log['action'] ?>
+                                </h5>
+                                <span class="text-sm text-gray-500"><?= formatTanggal($log['created_at']) ?></span>
+                            </div>
+                            <?php if ($log['user_nama']): ?>
+                                <p class="text-sm text-gray-600">Oleh: <?= sanitize($log['user_nama']) ?> (<?= $log['role'] ?>)</p>
+                            <?php endif; ?>
+                            <?php if ($log['details']): ?>
+                                <p class="text-sm text-gray-600 mt-1"><?= sanitize($log['details']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        <?php elseif ($logResult === null): ?>
+            <p class="text-gray-600 text-sm">Tabel riwayat belum dibuat. Silakan jalankan migrasi database.</p>
+        <?php else: ?>
+            <p class="text-gray-600 text-sm">Belum ada riwayat untuk aset ini.</p>
+        <?php endif; ?>
+    </div>
+</div>
+<?php
+$content = ob_get_clean();
+include '../views/layout.php';
