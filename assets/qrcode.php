@@ -26,6 +26,17 @@ $allowedHosts = ['localhost', '127.0.0.1', $_SERVER['SERVER_NAME'] ?? ''];
 $host = in_array($_SERVER['HTTP_HOST'], $allowedHosts) ? $_SERVER['HTTP_HOST'] : 'localhost';
 $qrUrl = generateQRCode("{$protocol}://{$host}/assets/detail.php?id={$asset['id']}", 300);
 
+if (isset($_GET['download']) && $_GET['download'] == '1') {
+    $imageData = @file_get_contents($qrUrl);
+    if ($imageData !== false) {
+        header('Content-Type: image/png');
+        header('Content-Disposition: attachment; filename="QR_' . $asset['kode_aset'] . '.png"');
+        header('Content-Length: ' . strlen($imageData));
+        echo $imageData;
+        exit;
+    }
+}
+
 ob_start();
 ?>
 <div class="max-w-2xl mx-auto px-4">

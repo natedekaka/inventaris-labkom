@@ -128,3 +128,41 @@ function getMonthlyBorrowings($months = 6) {
     }
     return ['labels' => $labels, 'data' => $data];
 }
+
+function getUserBorrowingsCount($userId) {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM borrowings WHERE user_id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result ? $result->fetch_assoc()['total'] : 0;
+}
+
+function getUserOverdueCount($userId) {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM borrowings WHERE user_id = ? AND status = 'dipinjam' AND rencana_kembali < CURDATE()");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result ? $result->fetch_assoc()['total'] : 0;
+}
+
+function getUserRecentBorrowings($userId, $limit = 5) {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("
+        SELECT b.*, a.kode_aset, a.nama_barang as nama_aset
+        FROM borrowings b
+        JOIN assets a ON b.asset_id = a.id
+        WHERE b.user_id = ?
+        ORDER BY b.tanggal_pinjam DESC
+        LIMIT ?
+    ");
+    $stmt->bind_param('ii', $userId, $limit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $borrowings = [];
+    while ($row = $result->fetch_assoc()) {
+        $borrowings[] = $row;
+    }
+    return $borrowings;
+}

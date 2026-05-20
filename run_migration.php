@@ -22,3 +22,22 @@ if ($db->query($sql)) {
 } else {
     echo "ERROR: " . $db->error . "\n";
 }
+
+$sql = "ALTER TABLE users MODIFY COLUMN role ENUM('admin','user','lab_assistant','viewer','operator') DEFAULT 'user'";
+if ($db->query($sql)) {
+    echo "SUCCESS: role ENUM updated with viewer and operator.\n";
+} else {
+    echo "ERROR: " . $db->error . "\n";
+}
+
+$sql = "CREATE TABLE IF NOT EXISTS permissions (
+    user_id INT,
+    permission VARCHAR(50),
+    PRIMARY KEY (user_id, permission),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+if ($db->query($sql)) {
+    echo "SUCCESS: permissions table created.\n";
+} else {
+    echo "ERROR: " . $db->error . "\n";
+}

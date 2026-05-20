@@ -53,6 +53,46 @@ ob_start();
     </div>
 
     <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h4 class="text-lg font-bold text-gray-800 mb-4">Laporan Peminjaman per Periode</h4>
+        <form class="flex gap-3 items-end flex-wrap" onsubmit="return validatePeriod(this)">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Dari Tanggal</label>
+                <input type="date" name="dari" id="dari_pinjam" class="px-3 py-2 border rounded-lg text-sm" required>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Sampai Tanggal</label>
+                <input type="date" name="sampai" id="sampai_pinjam" class="px-3 py-2 border rounded-lg text-sm" required>
+            </div>
+            <a href="#" onclick="exportBorrowings()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm inline-block">
+                <i class="fas fa-file-csv mr-1"></i>Export CSV
+            </a>
+            <a href="#" onclick="printBorrowings()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm inline-block" target="_blank">
+                <i class="fas fa-file-pdf mr-1"></i>Cetak PDF
+            </a>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h4 class="text-lg font-bold text-gray-800 mb-4">Laporan Maintenance per Periode</h4>
+        <form class="flex gap-3 items-end flex-wrap" onsubmit="return validatePeriod(this)">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Dari Tanggal</label>
+                <input type="date" name="dari" id="dari_maintenance" class="px-3 py-2 border rounded-lg text-sm" required>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Sampai Tanggal</label>
+                <input type="date" name="sampai" id="sampai_maintenance" class="px-3 py-2 border rounded-lg text-sm" required>
+            </div>
+            <a href="#" onclick="exportMaintenances()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm inline-block">
+                <i class="fas fa-file-csv mr-1"></i>Export CSV
+            </a>
+            <a href="#" onclick="printMaintenances()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm inline-block">
+                <i class="fas fa-file-pdf mr-1"></i>Cetak PDF
+            </a>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
         <h4 class="text-lg font-bold text-gray-800 mb-4">Kategori Aset</h4>
         <?php
         $kategoriResult = $db->query("SELECT c.nama_kategori as kategori, COUNT(*) as jumlah FROM assets a LEFT JOIN categories c ON a.category_id = c.id GROUP BY c.nama_kategori");
@@ -77,6 +117,50 @@ ob_start();
         </div>
     </div>
 </div>
+
+<script>
+function validatePeriod(form) {
+    var dari = form.querySelector('[name="dari"]').value;
+    var sampai = form.querySelector('[name="sampai"]').value;
+    if (sampai < dari) {
+        alert('Tanggal Sampai harus lebih besar atau sama dengan Dari Tanggal');
+        return false;
+    }
+    return true;
+}
+
+function exportBorrowings() {
+    var dari = document.getElementById('dari_pinjam').value;
+    var sampai = document.getElementById('sampai_pinjam').value;
+    if (!dari || !sampai) { alert('Pilih periode terlebih dahulu'); return; }
+    if (sampai < dari) { alert('Tanggal Sampai harus lebih besar atau sama dengan Dari Tanggal'); return; }
+    window.location.href = 'export_borrowings.php?dari=' + dari + '&sampai=' + sampai;
+}
+
+function printBorrowings() {
+    var dari = document.getElementById('dari_pinjam').value;
+    var sampai = document.getElementById('sampai_pinjam').value;
+    if (!dari || !sampai) { alert('Pilih periode terlebih dahulu'); return; }
+    if (sampai < dari) { alert('Tanggal Sampai harus lebih besar atau sama dengan Dari Tanggal'); return; }
+    window.open('print_borrowings.php?dari=' + dari + '&sampai=' + sampai, '_blank');
+}
+
+function exportMaintenances() {
+    var dari = document.getElementById('dari_maintenance').value;
+    var sampai = document.getElementById('sampai_maintenance').value;
+    if (!dari || !sampai) { alert('Pilih periode terlebih dahulu'); return; }
+    if (sampai < dari) { alert('Tanggal Sampai harus lebih besar atau sama dengan Dari Tanggal'); return; }
+    window.location.href = 'export_maintenances.php?dari=' + dari + '&sampai=' + sampai;
+}
+
+function printMaintenances() {
+    var dari = document.getElementById('dari_maintenance').value;
+    var sampai = document.getElementById('sampai_maintenance').value;
+    if (!dari || !sampai) { alert('Pilih periode terlebih dahulu'); return; }
+    if (sampai < dari) { alert('Tanggal Sampai harus lebih besar atau sama dengan Dari Tanggal'); return; }
+    window.open('print_maintenances.php?dari=' + dari + '&sampai=' + sampai, '_blank');
+}
+</script>
 <?php
 $content = ob_get_clean();
 include '../views/layout.php';

@@ -6,24 +6,111 @@ require_once __DIR__ . '/core/App.php';
 require_once __DIR__ . '/core/functions.php';
 require_once __DIR__ . '/dashboard/stats.php';
 
-$totalAset = getTotalAssets();
-$asetBaik = getAssetsByConditionCount('baik');
-$asetDipinjam = getBorrowedAssets();
-$asetRusak = getAssetsByConditionCount('rusak');
-$asetTerbaru = getRecentAssets(5);
-$overdueBorrowings = getOverdueBorrowings();
-
-// Chart data
-$categoryData = getAssetsByCategory();
-$conditionData = getAssetsByConditionChart();
-$borrowingData = getMonthlyBorrowings(6);
+$role = $_SESSION['role'] ?? 'user';
+$userId = $_SESSION['user_id'] ?? 0;
 
 $title = 'Dashboard';
 
 ob_start();
 ?>
 <div class="max-w-7xl mx-auto px-4">
-    <!-- Stat Cards -->
+<?php if (in_array($role, ['viewer', 'user'])): ?>
+    <?php
+    $totalAset = getTotalAssets();
+    $myBorrowingsCount = getUserBorrowingsCount($userId);
+    $myOverdueCount = getUserOverdueCount($userId);
+    $myRecentBorrowings = getUserRecentBorrowings($userId, 5);
+    ?>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Aset</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1"><?= $totalAset ?></p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-boxes text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Peminjaman Saya</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1"><?= $myBorrowingsCount ?></p>
+                </div>
+                <div class="bg-yellow-100 p-3 rounded-lg">
+                    <i class="fas fa-handshake text-2xl text-yellow-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Overdue Saya</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1"><?= $myOverdueCount ?></p>
+                </div>
+                <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-800">Riwayat Peminjaman Saya</h4>
+            <a href="/borrowings/peminjaman.php" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200">
+                <i class="fas fa-plus mr-1"></i>Pinjam Aset
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aset</th>
+                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Pinjam</th>
+                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Rencana Kembali</th>
+                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php if (empty($myRecentBorrowings)): ?>
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500">Belum ada peminjaman</td>
+                    </tr>
+                    <?php else: ?>
+                    <?php foreach ($myRecentBorrowings as $b): ?>
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($b['kode_aset']) ?></td>
+                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($b['nama_aset']) ?></td>
+                        <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($b['tanggal_pinjam']) ?></td>
+                        <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($b['rencana_kembali']) ?></td>
+                        <td class="py-4 px-6">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $b['status'] === 'dipinjam' ? 'bg-yellow-100 text-yellow-800' : ($b['status'] === 'dikembalikan' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') ?>">
+                                <?= sanitize($b['status']) ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php else: ?>
+    <?php
+    $totalAset = getTotalAssets();
+    $asetBaik = getAssetsByConditionCount('baik');
+    $asetDipinjam = getBorrowedAssets();
+    $asetRusak = getAssetsByConditionCount('rusak');
+    $asetTerbaru = getRecentAssets(5);
+    $overdueBorrowings = getOverdueBorrowings();
+    $categoryData = getAssetsByCategory();
+    $conditionData = getAssetsByConditionChart();
+    $borrowingData = getMonthlyBorrowings(6);
+    ?>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
             <div class="flex items-center justify-between">
@@ -71,7 +158,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-md p-6">
             <h4 class="text-lg font-semibold text-gray-800 mb-4">Aset per Kategori</h4>
@@ -85,13 +171,11 @@ ob_start();
         </div>
     </div>
 
-    <!-- Monthly Borrowing Chart -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-8">
         <h4 class="text-lg font-semibold text-gray-800 mb-4">Peminjaman Bulanan</h4>
         <canvas id="borrowingChart"></canvas>
     </div>
 
-    <!-- Overdue Borrowings Alert -->
     <?php if (!empty($overdueBorrowings)): 
         $totalOverdue = count($overdueBorrowings);
         $criticalOverdue = 0;
@@ -191,7 +275,6 @@ ob_start();
     </div>
     <?php endif; ?>
 
-    <!-- Recent Assets Table -->
     <div class="bg-white rounded-xl shadow-md mb-8">
         <div class="px-6 py-4 border-b border-gray-200">
             <h4 class="text-lg font-semibold text-gray-800">Aset Terbaru</h4>
@@ -225,8 +308,10 @@ ob_start();
             </table>
         </div>
     </div>
+<?php endif; ?>
 </div>
 
+<?php if (in_array($role, ['admin', 'lab_assistant', 'operator'])): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     new Chart(document.getElementById('categoryChart'), {
@@ -310,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<?php endif; ?>
 
 <?php
 $content = ob_get_clean();

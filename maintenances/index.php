@@ -83,7 +83,7 @@ ob_start();
                     </td>
                     <td class="py-4 px-6">
                         <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
-                        <button type="button" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, '<?= addslashes($row['nama_aset']) ?>')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
+                        <button type="button" data-delete-name="<?= htmlspecialchars($row['nama_aset'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
                     </td>
                 </tr>
                 <?php endwhile; ?>

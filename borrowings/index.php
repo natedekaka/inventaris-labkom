@@ -9,13 +9,16 @@ App::requireLogin();
 $title = 'Daftar Peminjaman';
 $db = db();
 
-if (isset($_GET['approve'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['approve'])) {
     App::requireRole(['admin', 'lab_assistant']);
+    if (!App::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        App::setFlash('Invalid request', 'danger');
+        App::redirect('/borrowings/');
+    }
     $id = (int)$_GET['approve'];
     $stmt = $db->prepare("UPDATE borrowings SET status = 'dipinjam', tanggal_pinjam = CURDATE() WHERE id = ? AND status = 'pending'");
     $stmt->bind_param('i', $id);
     if ($stmt->execute()) {
-        // Get asset_id for logging
         $asset_stmt = $db->prepare("SELECT asset_id FROM borrowings WHERE id = ?");
         $asset_stmt->bind_param('i', $id);
         $asset_stmt->execute();
@@ -33,13 +36,16 @@ if (isset($_GET['approve'])) {
     App::redirect('/borrowings/');
 }
 
-if (isset($_GET['reject'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['reject'])) {
     App::requireRole(['admin', 'lab_assistant']);
+    if (!App::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        App::setFlash('Invalid request', 'danger');
+        App::redirect('/borrowings/');
+    }
     $id = (int)$_GET['reject'];
     $stmt = $db->prepare("UPDATE borrowings SET status = 'rejected' WHERE id = ? AND status = 'pending'");
     $stmt->bind_param('i', $id);
     if ($stmt->execute()) {
-        // Get asset_id for logging
         $asset_stmt = $db->prepare("SELECT asset_id FROM borrowings WHERE id = ?");
         $asset_stmt->bind_param('i', $id);
         $asset_stmt->execute();
@@ -63,6 +69,8 @@ if ($status_filter !== 'all') {
 }
 
 $search = $_GET['search'] ?? '';
+$dari_tanggal = $_GET['dari_tanggal'] ?? '';
+$sampai_tanggal = $_GET['sampai_tanggal'] ?? '';
 $page = (int)($_GET['page'] ?? 1);
 $limit = 10;
 $offset = ($page - 1) * $limit;
@@ -75,6 +83,32 @@ if ($search) {
         $where .= " AND $searchClause";
     }
     array_push($params, "%$search%", "%$search%", "%$search%");
+}
+
+if ($dari_tanggal && $sampai_tanggal) {
+    $dateClause = "b.tanggal_pinjam BETWEEN ? AND ?";
+    if ($where === '') {
+        $where = "WHERE $dateClause";
+    } else {
+        $where .= " AND $dateClause";
+    }
+    array_push($params, $dari_tanggal, $sampai_tanggal);
+} elseif ($dari_tanggal) {
+    $dateClause = "b.tanggal_pinjam >= ?";
+    if ($where === '') {
+        $where = "WHERE $dateClause";
+    } else {
+        $where .= " AND $dateClause";
+    }
+    array_push($params, $dari_tanggal);
+} elseif ($sampai_tanggal) {
+    $dateClause = "b.tanggal_pinjam <= ?";
+    if ($where === '') {
+        $where = "WHERE $dateClause";
+    } else {
+        $where .= " AND $dateClause";
+    }
+    array_push($params, $sampai_tanggal);
 }
 
 $countSql = "SELECT COUNT(*) as total FROM borrowings b 
@@ -115,13 +149,26 @@ ob_start();
     </div>
 
     <form method="GET" class="mb-4">
-        <div class="flex gap-2">
+        <div class="flex gap-2 mb-2">
             <input type="text" name="search" placeholder="Cari aset atau peminjam..." class="flex-1 px-4 py-2 border rounded-lg" value="<?= sanitize($search) ?>">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Cari</button>
         </div>
+        <div class="flex gap-2 items-end">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Dari Tanggal</label>
+                <input type="date" name="dari_tanggal" class="px-3 py-2 border rounded-lg text-sm" value="<?= sanitize($dari_tanggal) ?>">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Sampai Tanggal</label>
+                <input type="date" name="sampai_tanggal" class="px-3 py-2 border rounded-lg text-sm" value="<?= sanitize($sampai_tanggal) ?>">
+            </div>
+            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm">Filter Tanggal</button>
+            <?php if ($dari_tanggal || $sampai_tanggal): ?>
+            <a href="?filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 rounded-lg text-sm">Reset</a>
+            <?php endif; ?>
+        </div>
     </form>
 
-    <!-- Filter Tabs -->
     <div class="bg-white rounded-xl shadow-md p-4 mb-6">
         <div class="flex gap-2 flex-wrap">
             <?php
@@ -137,7 +184,7 @@ ob_start();
                 $is_active = $status_filter === $key;
                 $color = $f['color'];
             ?>
-                <a href="?filter=<?= $key ?>&search=<?= urlencode($search) ?>" 
+                <a href="?filter=<?= $key ?>&search=<?= urlencode($search) ?>&dari_tanggal=<?= urlencode($dari_tanggal) ?>&sampai_tanggal=<?= urlencode($sampai_tanggal) ?>" 
                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
                           <?= $is_active 
                               ? "bg-{$color}-100 text-{$color}-800" 
@@ -189,12 +236,10 @@ ob_start();
                         </td>
                         <td class="py-4 px-6">
                             <?php if ($row['status'] === 'pending' && App::isAdmin() || App::isLabAssistant()): ?>
-                                <a href="?approve=<?= $row['id'] ?>" 
-                                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block mr-1"
-                                   onclick="return confirm('Setujui peminjaman ini?')">Setujui</a>
-                                <a href="?reject=<?= $row['id'] ?>" 
-                                   class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block"
-                                   onclick="return confirm('Tolak peminjaman ini?')">Tolak</a>
+                                <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
+                                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block mr-1">Setujui</button>
+                                <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
+                                   class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">Tolak</button>
                             <?php elseif ($row['status'] === 'dipinjam'): ?>
                                 <a href="pengembalian.php?id=<?= $row['id'] ?>" 
                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block">Kembalikan</a>
@@ -215,13 +260,70 @@ ob_start();
     <?php if ($totalPages > 1): ?>
     <div class="flex gap-2 justify-center mb-8">
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-        <a href="?page=<?= $i ?>&filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>" class="px-3 py-1 rounded-lg border <?= $i === $page ? 'bg-blue-50 text-blue-600 font-semibold border-blue-300' : 'border-gray-300 hover:bg-gray-50' ?>">
+        <a href="?page=<?= $i ?>&filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>&dari_tanggal=<?= urlencode($dari_tanggal) ?>&sampai_tanggal=<?= urlencode($sampai_tanggal) ?>" class="px-3 py-1 rounded-lg border <?= $i === $page ? 'bg-blue-50 text-blue-600 font-semibold border-blue-300' : 'border-gray-300 hover:bg-gray-50' ?>">
             <?= $i ?>
         </a>
         <?php endfor; ?>
     </div>
     <?php endif; ?>
 </div>
+
+<div id="approveRejectModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="closeActionModal()"></div>
+    <div class="bg-white rounded-xl shadow-2xl p-6 z-10 max-w-md w-full mx-4 relative transform transition-all">
+        <div class="text-center mb-4">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" id="actionModalIcon">
+                <i class="fas fa-check text-2xl text-green-600"></i>
+            </div>
+            <h4 class="text-xl font-bold text-gray-800 mb-2" id="actionModalTitle">Konfirmasi</h4>
+            <p class="text-gray-600" id="actionModalMessage">Apakah Anda yakin?</p>
+        </div>
+        <form method="POST" id="actionModalForm">
+            <?= App::csrfField() ?>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium" id="actionModalConfirmBtn">
+                    <i class="fas fa-check mr-1"></i> Ya
+                </button>
+                <button type="button" onclick="closeActionModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+                    Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openApproveModal(id, nama) {
+    document.getElementById('actionModalForm').action = '?approve=' + id;
+    document.getElementById('actionModalTitle').textContent = 'Setujui Peminjaman';
+    document.getElementById('actionModalMessage').textContent = 'Apakah Anda yakin ingin menyetujui peminjaman oleh "' + nama + '"?';
+    document.getElementById('actionModalIcon').innerHTML = '<i class="fas fa-check text-2xl text-green-600"></i>';
+    document.getElementById('actionModalConfirmBtn').className = 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium';
+    document.getElementById('actionModalConfirmBtn').innerHTML = '<i class="fas fa-check mr-1"></i> Ya, Setujui';
+    document.getElementById('approveRejectModal').classList.remove('hidden');
+    document.getElementById('approveRejectModal').classList.add('flex');
+}
+
+function openRejectModal(id, nama) {
+    document.getElementById('actionModalForm').action = '?reject=' + id;
+    document.getElementById('actionModalTitle').textContent = 'Tolak Peminjaman';
+    document.getElementById('actionModalMessage').textContent = 'Apakah Anda yakin ingin menolak peminjaman oleh "' + nama + '"?';
+    document.getElementById('actionModalIcon').innerHTML = '<i class="fas fa-times text-2xl text-red-600"></i>';
+    document.getElementById('actionModalConfirmBtn').className = 'flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium';
+    document.getElementById('actionModalConfirmBtn').innerHTML = '<i class="fas fa-times mr-1"></i> Ya, Tolak';
+    document.getElementById('approveRejectModal').classList.remove('hidden');
+    document.getElementById('approveRejectModal').classList.add('flex');
+}
+
+function closeActionModal() {
+    document.getElementById('approveRejectModal').classList.add('hidden');
+    document.getElementById('approveRejectModal').classList.remove('flex');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeActionModal();
+});
+</script>
 <?php
 $content = ob_get_clean();
 include '../views/layout.php';

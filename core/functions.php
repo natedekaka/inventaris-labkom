@@ -58,9 +58,14 @@ function generateQRCode($data, $size = 150) {
 }
 
 function logAssetAction($asset_id, $user_id, $action, $details = null) {
-    $db = db();
-    $stmt = $db->prepare("INSERT INTO asset_logs (asset_id, user_id, action, details) VALUES (?, ?, ?, ?)");
-    $details_json = $details ? json_encode($details) : null;
-    $stmt->bind_param('iiss', $asset_id, $user_id, $action, $details_json);
-    return $stmt->execute();
+    try {
+        $db = db();
+        $stmt = $db->prepare("INSERT INTO asset_logs (asset_id, user_id, action, details) VALUES (?, ?, ?, ?)");
+        $details_json = $details ? json_encode($details) : null;
+        $stmt->bind_param('iiss', $asset_id, $user_id, $action, $details_json);
+        return $stmt->execute();
+    } catch (Exception $e) {
+        // Silent fail — asset_logs is non-critical, tabel mungkin belum di-migrate
+        return false;
+    }
 }

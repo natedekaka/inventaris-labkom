@@ -1,6 +1,12 @@
 <?php
 
 class App {
+    const ROLE_ADMIN = 'admin';
+    const ROLE_USER = 'user';
+    const ROLE_LAB_ASSISTANT = 'lab_assistant';
+    const ROLE_VIEWER = 'viewer';
+    const ROLE_OPERATOR = 'operator';
+
     public function __construct() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -51,8 +57,32 @@ class App {
         return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
     }
 
+    public static function isViewer() {
+        return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'viewer']);
+    }
+
+    public static function isOperator() {
+        return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'operator', 'lab_assistant']);
+    }
+
+    public static function hasPermission($permission) {
+        if (!isset($_SESSION['user_id'])) {
+            return false;
+        }
+        if (self::isAdmin()) {
+            return true;
+        }
+        $conn = Database::getInstance()->getConnection();
+        $stmt = $conn->prepare("SELECT COUNT(*) as cnt FROM permissions WHERE user_id = ? AND permission = ?");
+        $stmt->bind_param('is', $_SESSION['user_id'], $permission);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        return $row['cnt'] > 0;
+    }
+
     public static function isLabAssistant() {
-        return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'lab_assistant']);
+        return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'lab_assistant', 'operator']);
     }
 
     public static function generateCsrfToken() {
