@@ -1,0 +1,64 @@
+services:
+  app:
+    image: docker.io/library/php:8.2-apache
+    container_name: inventaris-labkom-app
+    user: root
+    ports:
+      - "8088:80"
+    volumes:
+      - .:/var/www/html:z
+    environment:
+      - DB_HOST=db
+      - DB_NAME=inventaris_labkom
+      - DB_USER=inventaris_user
+      - DB_PASS=inventaris_pass_2026
+      - DB_PORT=3306
+    depends_on:
+      - db
+    networks:
+      - inventaris-net
+    restart: unless-stopped
+    command: >
+      bash -c "docker-php-ext-install mysqli pdo pdo_mysql &&
+              a2enmod rewrite &&
+              chmod -R 777 /var/www/html/uploads &&
+              apache2-foreground"
+
+  db:
+    image: docker.io/library/mariadb:10.11
+    container_name: inventaris-labkom-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: inventaris_labkom
+      MYSQL_USER: inventaris_user
+      MYSQL_PASSWORD: inventaris_pass_2026
+      TZ: Asia/Jakarta
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - inventaris-labkom-dbdata:/var/lib/mysql:z
+    networks:
+      - inventaris-net
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: docker.io/library/phpmyadmin:latest
+    container_name: inventaris-labkom-pma
+    ports:
+      - "8089:80"
+    environment:
+      PMA_HOST: db
+      PMA_ARBITRARY: 1
+    depends_on:
+      - db
+    networks:
+      - inventaris-net
+    restart: unless-stopped
+
+volumes:
+  inventaris-labkom-dbdata:
+
+networks:
+  inventaris-net:
+    driver: bridge
