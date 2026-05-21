@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         App::setFlash('Invalid request', 'danger');
         App::redirect('/assets/edit.php?id=' . $id);
     }
+    $kode_aset = !empty(trim($_POST['kode_aset'] ?? '')) ? trim($_POST['kode_aset']) : $asset['kode_aset'];
     $nama_barang = $_POST['nama_barang'] ?? '';
     $category_id = (int)($_POST['category_id'] ?? 0);
     $merek = $_POST['merek'] ?? '';
@@ -43,6 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? '';
     if (!in_array($status, ['tersedia', 'dipinjam', 'perbaikan'])) $status = $asset['status'];
     $location_id = (int)($_POST['location_id'] ?? 0);
+
+    if (empty($kode_aset)) {
+        App::setFlash('Kode aset harus diisi', 'danger');
+        App::redirect('/assets/edit.php?id=' . $id);
+    }
+    if (strlen($kode_aset) > 50) {
+        App::setFlash('Kode aset maksimal 50 karakter', 'danger');
+        App::redirect('/assets/edit.php?id=' . $id);
+    }
+    $check = $db->prepare("SELECT id FROM assets WHERE kode_aset = ? AND id != ?");
+    $check->bind_param('si', $kode_aset, $id);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) {
+        App::setFlash('Kode aset "' . sanitize($kode_aset) . '" sudah digunakan', 'danger');
+        App::redirect('/assets/edit.php?id=' . $id);
+    }
 
     $foto = $asset['foto'];
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
@@ -72,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         move_uploaded_file($_FILES['foto']['tmp_name'], $upload_dir . $foto);
     }
 
-    $stmt = $db->prepare("UPDATE assets SET nama_barang = ?, category_id = ?, merek = ?, model = ?, serial_number = ?, spesifikasi = ?, harga = ?, kondisi = ?, status = ?, location_id = ?, foto = ? WHERE id = ?");
-    $stmt->bind_param('sisssdsssisi', $nama_barang, $category_id, $merek, $model, $serial_number, $spesifikasi, $harga, $kondisi, $status, $location_id, $foto, $id);
+    $stmt = $db->prepare("UPDATE assets SET kode_aset = ?, nama_barang = ?, category_id = ?, merek = ?, model = ?, serial_number = ?, spesifikasi = ?, harga = ?, kondisi = ?, status = ?, location_id = ?, foto = ? WHERE id = ?");
+    $stmt->bind_param('ssisssdsssisi', $kode_aset, $nama_barang, $category_id, $merek, $model, $serial_number, $spesifikasi, $harga, $kondisi, $status, $location_id, $foto, $id);
 
     if ($stmt->execute()) {
         App::setFlash('Aset berhasil diupdate', 'success');
@@ -91,27 +108,49 @@ ob_start();
         <form method="POST" enctype="multipart/form-data">
             <?= App::csrfField() ?>
             <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kode Aset</label>
+                <div class="flex gap-2">
+                    <input type="text" name="kode_aset" id="kode_aset" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($asset['kode_aset']) ?>" required maxlength="50" oninput="cekDuplikatKode()">
+                    <button type="button" onclick="generateKodeBaru()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Generate ulang kode otomatis">
+                        <i class="fas fa-sync-alt mr-1"></i>Generate
+                    </button>
+                </div>
+                <p id="kodeStatus" class="text-sm mt-1 text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>Kode unik aset. Edit jika diperlukan.
+                </p>
+            </div>
+            <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Aset</label>
                 <input type="text" name="nama_barang" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($asset['nama_barang']) ?>" required>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                    <select name="category_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                        <option value="">Pilih Kategori</option>
-                        <?php while ($cat = $categories->fetch_assoc()): ?>
-                        <option value="<?= $cat['id'] ?>" <?= $asset['category_id'] == $cat['id'] ? 'selected' : '' ?>><?= sanitize($cat['nama_kategori']) ?></option>
-                        <?php endwhile; ?>
-                    </select>
+                    <div class="flex gap-2">
+                        <select name="category_id" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Pilih Kategori</option>
+                            <?php while ($cat = $categories->fetch_assoc()): ?>
+                            <option value="<?= $cat['id'] ?>" <?= $asset['category_id'] == $cat['id'] ? 'selected' : '' ?>><?= sanitize($cat['nama_kategori']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                        <button type="button" onclick="openTambahModal('kategori')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Tambah Kategori Baru">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                    <select name="location_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                        <option value="">Pilih Lokasi</option>
-                        <?php while ($loc = $locations->fetch_assoc()): ?>
-                        <option value="<?= $loc['id'] ?>" <?= $asset['location_id'] == $loc['id'] ? 'selected' : '' ?>><?= sanitize($loc['nama_lokasi']) ?></option>
-                        <?php endwhile; ?>
-                    </select>
+                    <div class="flex gap-2">
+                        <select name="location_id" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Pilih Lokasi</option>
+                            <?php while ($loc = $locations->fetch_assoc()): ?>
+                            <option value="<?= $loc['id'] ?>" <?= $asset['location_id'] == $loc['id'] ? 'selected' : '' ?>><?= sanitize($loc['nama_lokasi']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                        <button type="button" onclick="openTambahModal('lokasi')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Tambah Lokasi Baru">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -168,6 +207,180 @@ ob_start();
         </form>
     </div>
 </div>
+
+<!-- Modal Tambah Kategori/Lokasi -->
+<div id="tambahModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="closeTambahModal()"></div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 z-10 max-w-md w-full mx-4 relative transform transition-all">
+        <div class="text-center mb-4">
+            <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-plus text-2xl text-green-600"></i>
+            </div>
+            <h4 class="text-xl font-bold text-gray-800 dark:text-white mb-2" id="tambahModalTitle">Tambah</h4>
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" id="tambahModalLabel">Nama</label>
+            <input type="text" id="tambahModalInput" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none dark:bg-gray-700 dark:text-white" placeholder="Masukkan nama" maxlength="100">
+            <p id="tambahModalError" class="text-red-500 text-sm mt-1 hidden"></p>
+        </div>
+        <input type="hidden" id="tambahModalType" value="">
+        <div class="flex gap-2">
+            <button id="tambahModalBtn" onclick="submitTambahModal()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+                <i class="fas fa-save mr-1"></i> Simpan
+            </button>
+            <button type="button" onclick="closeTambahModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openTambahModal(type) {
+    var modal = document.getElementById('tambahModal');
+    var title = document.getElementById('tambahModalTitle');
+    var label = document.getElementById('tambahModalLabel');
+    var input = document.getElementById('tambahModalInput');
+    var error = document.getElementById('tambahModalError');
+
+    document.getElementById('tambahModalType').value = type;
+
+    if (type === 'kategori') {
+        title.textContent = 'Tambah Kategori Baru';
+        label.textContent = 'Nama Kategori';
+        input.placeholder = 'Contoh: Printer, Scanner, UPS';
+    } else {
+        title.textContent = 'Tambah Lokasi Baru';
+        label.textContent = 'Nama Lokasi';
+        input.placeholder = 'Contoh: Lab 3, Lab 4, Ruang Guru';
+    }
+
+    input.value = '';
+    error.classList.add('hidden');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(function() { input.focus(); }, 100);
+}
+
+function closeTambahModal() {
+    document.getElementById('tambahModal').classList.add('hidden');
+    document.getElementById('tambahModal').classList.remove('flex');
+}
+
+function submitTambahModal() {
+    var type = document.getElementById('tambahModalType').value;
+    var nama = document.getElementById('tambahModalInput').value.trim();
+    var error = document.getElementById('tambahModalError');
+    var btn = document.getElementById('tambahModalBtn');
+
+    if (!nama) {
+        error.textContent = 'Nama tidak boleh kosong';
+        error.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...';
+    error.classList.add('hidden');
+
+    var csrfField = document.querySelector('form input[name="csrf_token"]');
+    var csrfToken = csrfField ? csrfField.value : '';
+    var url = type === 'kategori' ? 'tambah_kategori.php' : 'tambah_lokasi.php';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'nama=' + encodeURIComponent(nama) + '&csrf_token=' + encodeURIComponent(csrfToken)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var selectName = type === 'kategori' ? 'category_id' : 'location_id';
+            var select = document.querySelector('select[name="' + selectName + '"]');
+            var option = document.createElement('option');
+            option.value = data.id;
+            option.textContent = data.nama;
+            option.selected = true;
+            select.appendChild(option);
+            closeTambahModal();
+        } else {
+            error.textContent = data.message || 'Gagal menyimpan';
+            error.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save mr-1"></i> Simpan';
+        }
+    })
+    .catch(function() {
+        error.textContent = 'Terjadi kesalahan koneksi';
+        error.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save mr-1"></i> Simpan';
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTambahModal();
+});
+
+// ===== KODE ASET =====
+var kodeTimeout = null;
+var kodeExcludeId = <?= (int)$id ?>;
+
+function cekDuplikatKode() {
+    var input = document.getElementById('kode_aset');
+    var status = document.getElementById('kodeStatus');
+    var kode = input.value.trim();
+
+    clearTimeout(kodeTimeout);
+
+    if (!kode) {
+        status.className = 'text-sm mt-1 text-red-600';
+        status.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>Kode aset tidak boleh kosong';
+        return;
+    }
+
+    status.className = 'text-sm mt-1 text-gray-500';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Memeriksa ketersediaan...';
+
+    kodeTimeout = setTimeout(function() {
+        fetch('cek_duplikat_kode.php?kode=' + encodeURIComponent(kode) + '&exclude_id=' + kodeExcludeId)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.available) {
+                    status.className = 'text-sm mt-1 text-green-600';
+                    status.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Kode tersedia';
+                } else {
+                    status.className = 'text-sm mt-1 text-red-600';
+                    status.innerHTML = '<i class="fas fa-times-circle mr-1"></i>' + data.message;
+                }
+            })
+            .catch(function() {
+                status.className = 'text-sm mt-1 text-gray-500';
+                status.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Gagal memeriksa ketersediaan';
+            });
+    }, 400);
+}
+
+function generateKodeBaru() {
+    var input = document.getElementById('kode_aset');
+    var status = document.getElementById('kodeStatus');
+
+    status.className = 'text-sm mt-1 text-blue-600';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Mengenerate kode...';
+
+    fetch('generate_kode.php')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            input.value = data.kode;
+            cekDuplikatKode();
+        })
+        .catch(function() {
+            status.className = 'text-sm mt-1 text-red-600';
+            status.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Gagal generate kode';
+        });
+}
+</script>
 <?php
 $content = ob_get_clean();
 include '../views/layout.php';

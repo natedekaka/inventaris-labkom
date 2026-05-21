@@ -140,6 +140,11 @@ $stmt->bind_param($types, ...$bindParams);
 $stmt->execute();
 $result = $stmt->get_result();
 
+$borrowings_list = [];
+while ($row = $result->fetch_assoc()) {
+    $borrowings_list[] = $row;
+}
+
 ob_start();
 ?>
 <div class="max-w-7xl mx-auto px-4">
@@ -195,66 +200,118 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md mb-8">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aset</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Peminjam</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pinjam</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Rencana Kembali</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-4 px-6 text-sm text-gray-900">
-                            <div>
-                                <div class="font-medium"><?= sanitize($row['nama_aset']) ?></div>
-                                <div class="text-xs text-gray-500"><?= sanitize($row['kode_aset']) ?></div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nama_peminjam']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['tanggal_pinjam']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['rencana_kembali']) ?></td>
-                        <td class="py-4 px-6">
-                            <?php
-                            $statusColors = [
-                                'pending' => 'bg-yellow-100 text-yellow-800',
-                                'approved' => 'bg-blue-100 text-blue-800',
-                                'dipinjam' => 'bg-green-100 text-green-800',
-                                'dikembalikan' => 'bg-gray-100 text-gray-800',
-                                'rejected' => 'bg-red-100 text-red-800'
-                            ];
-                            ?>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusColors[$row['status']] ?? 'bg-gray-100 text-gray-800' ?>">
-                                <?= ucfirst($row['status']) ?>
-                            </span>
-                        </td>
-                        <td class="py-4 px-6">
-                            <?php if ($row['status'] === 'pending' && App::isAdmin() || App::isLabAssistant()): ?>
-                                <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
-                                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block mr-1">Setujui</button>
-                                <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
-                                   class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">Tolak</button>
-                            <?php elseif ($row['status'] === 'dipinjam'): ?>
-                                <a href="pengembalian.php?id=<?= $row['id'] ?>" 
-                                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block">Kembalikan</a>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                    <?php if ($result->num_rows === 0): ?>
-                    <tr>
-                        <td colspan="6" class="py-8 px-6 text-center text-gray-500">Tidak ada data peminjaman</td>
-                    </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+    <div class="hidden md:block">
+        <div class="bg-white rounded-xl shadow-md mb-8">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aset</th>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Peminjam</th>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pinjam</th>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Rencana Kembali</th>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php foreach ($borrowings_list as $row): ?>
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-4 px-6 text-sm text-gray-900">
+                                <div>
+                                    <div class="font-medium"><?= sanitize($row['nama_aset']) ?></div>
+                                    <div class="text-xs text-gray-500"><?= sanitize($row['kode_aset']) ?></div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nama_peminjam']) ?></td>
+                            <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['tanggal_pinjam']) ?></td>
+                            <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['rencana_kembali']) ?></td>
+                            <td class="py-4 px-6">
+                                <?php
+                                $statusColors = [
+                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'approved' => 'bg-blue-100 text-blue-800',
+                                    'dipinjam' => 'bg-green-100 text-green-800',
+                                    'dikembalikan' => 'bg-gray-100 text-gray-800',
+                                    'rejected' => 'bg-red-100 text-red-800'
+                                ];
+                                ?>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusColors[$row['status']] ?? 'bg-gray-100 text-gray-800' ?>">
+                                    <?= ucfirst($row['status']) ?>
+                                </span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <?php if ($row['status'] === 'pending' && (App::isAdmin() || App::isLabAssistant())): ?>
+                                    <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
+                                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block mr-1">Setujui</button>
+                                    <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
+                                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">Tolak</button>
+                                <?php elseif ($row['status'] === 'dipinjam'): ?>
+                                    <a href="pengembalian.php?id=<?= $row['id'] ?>" 
+                                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block">Kembalikan</a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (count($borrowings_list) === 0): ?>
+                        <tr>
+                            <td colspan="6" class="py-8 px-6 text-center text-gray-500">Tidak ada data peminjaman</td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
+        <?php if (count($borrowings_list) === 0): ?>
+        <div class="text-center py-8 text-gray-500">Tidak ada data peminjaman</div>
+        <?php endif; ?>
+    </div>
+
+    <div class="block md:hidden space-y-3 mb-6">
+        <?php foreach ($borrowings_list as $row): ?>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="font-semibold text-gray-900 dark:text-white"><?= sanitize($row['nama_aset']) ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400"><?= sanitize($row['kode_aset']) ?></p>
+                </div>
+                <?php
+                $statusColors = [
+                    'pending' => 'bg-yellow-100 text-yellow-800',
+                    'approved' => 'bg-blue-100 text-blue-800',
+                    'dipinjam' => 'bg-green-100 text-green-800',
+                    'dikembalikan' => 'bg-gray-100 text-gray-800',
+                    'rejected' => 'bg-red-100 text-red-800'
+                ];
+                ?>
+                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusColors[$row['status']] ?? 'bg-gray-100 text-gray-800' ?>">
+                    <?= ucfirst($row['status']) ?>
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Peminjam</span>
+                    <p class="text-gray-900 dark:text-white"><?= sanitize($row['nama_peminjam']) ?></p>
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Tgl Pinjam</span>
+                    <p class="text-gray-900 dark:text-white"><?= formatTanggal($row['tanggal_pinjam']) ?></p>
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Rencana Kembali</span>
+                    <p class="text-gray-900 dark:text-white"><?= formatTanggal($row['rencana_kembali']) ?></p>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <?php if ($row['status'] === 'pending' && (App::isAdmin() || App::isLabAssistant())): ?>
+                    <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">Setujui</button>
+                    <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="flex-1 text-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm">Tolak</button>
+                <?php elseif ($row['status'] === 'dipinjam'): ?>
+                    <a href="pengembalian.php?id=<?= $row['id'] ?>" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">Kembalikan</a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
     </div>
 
     <?php if ($totalPages > 1): ?>

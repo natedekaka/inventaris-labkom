@@ -78,10 +78,13 @@
                     </button>
 
                     <!-- Overdue Notification -->
-                    <a href="/borrowings/index.php?filter=dipinjam" id="notificationBell" class="relative text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary text-lg">
-                        <i class="fas fa-bell"></i>
-                        <span id="overdueBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden">0</span>
-                    </a>
+                    <div class="relative" id="notificationContainer">
+                        <button id="notificationBell" class="relative text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary text-lg focus:outline-none" aria-label="Notifikasi">
+                            <i class="fas fa-bell"></i>
+                            <span id="overdueBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-y-auto"></div>
+                    </div>
 
                     <a href="/profile/" class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary">
                         <i class="fas fa-user-circle mr-1"></i><?= htmlspecialchars($_SESSION['nama'] ?? 'User') ?>
@@ -272,7 +275,7 @@
 
             // ===== OVERDUE NOTIFICATION =====
             function fetchOverdueCount() {
-                fetch('/overdue_count.php')
+                fetch('/notifications.php')
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         var badge = document.getElementById('overdueBadge');
@@ -287,6 +290,95 @@
                     })
                     .catch(function() {});
             }
+
+            function openNotificationDropdown() {
+                var dropdown = document.getElementById('notificationDropdown');
+                if (!dropdown) return;
+                if (!dropdown.classList.contains('hidden')) {
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+                dropdown.classList.remove('hidden');
+
+                var severityStyles = {
+                    critical: { iconBg: 'bg-red-100', iconColor: 'text-red-600', badgeBg: 'bg-red-100', badgeColor: 'text-red-700', label: 'Kritis' },
+                    warning: { iconBg: 'bg-orange-100', iconColor: 'text-orange-600', badgeBg: 'bg-orange-100', badgeColor: 'text-orange-700', label: 'Warning' },
+                    info: { iconBg: 'bg-yellow-100', iconColor: 'text-yellow-600', badgeBg: 'bg-yellow-100', badgeColor: 'text-yellow-700', label: 'Info' }
+                };
+
+                fetch('/notifications.php')
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        dropdown.innerHTML = '';
+                        var header = document.createElement('div');
+                        header.className = 'px-4 py-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10';
+                        header.innerHTML = '<h4 class="font-semibold text-gray-800 dark:text-white">Notifikasi Terlambat</h4>';
+                        dropdown.appendChild(header);
+
+                        if (data.notifications.length === 0) {
+                            var empty = document.createElement('div');
+                            empty.className = 'px-4 py-8 text-center text-gray-500 dark:text-gray-400';
+                            empty.innerHTML = '<i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i><p class="text-sm">Semua peminjaman tepat waktu \u2705</p>';
+                            dropdown.appendChild(empty);
+                        } else {
+                            data.notifications.forEach(function(n) {
+                                var s = severityStyles[n.severity] || severityStyles.info;
+                                var a = document.createElement('a');
+                                a.href = '/borrowings/pengembalian.php?id=' + n.id;
+                                a.className = 'block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700';
+                                a.innerHTML = '<div class="flex items-start gap-3">'
+                                    + '<div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ' + s.iconBg + '">'
+                                    + '<i class="fas fa-exclamation-circle ' + s.iconColor + ' text-sm"></i>'
+                                    + '</div>'
+                                    + '<div class="flex-1 min-w-0">'
+                                    + '<p class="text-sm font-medium text-gray-900 dark:text-white truncate">' + escapeHtml(n.nama_peminjam) + '</p>'
+                                    + '<p class="text-xs text-gray-500 dark:text-gray-400 truncate">' + escapeHtml(n.nama_aset) + ' (' + escapeHtml(n.kode_aset) + ')</p>'
+                                    + '<div class="flex items-center gap-2 mt-1">'
+                                    + '<span class="text-xs text-gray-400">Terlambat ' + n.hari_terlambat + ' hari</span>'
+                                    + '<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full ' + s.badgeBg + ' ' + s.badgeColor + '">' + s.label + '</span>'
+                                    + '</div>'
+                                    + '</div>'
+                                    + '<i class="fas fa-chevron-right text-gray-400 text-xs mt-2"></i>'
+                                    + '</div>';
+                                dropdown.appendChild(a);
+                            });
+
+                            var footer = document.createElement('a');
+                            footer.href = '/borrowings/index.php?filter=dipinjam';
+                            footer.className = 'block px-4 py-3 text-center text-sm font-medium text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-xl';
+                            footer.innerHTML = 'Lihat Semua <i class="fas fa-arrow-right ml-1"></i>';
+                            dropdown.appendChild(footer);
+                        }
+                    })
+                    .catch(function() {
+                        dropdown.innerHTML = '<div class="px-4 py-8 text-center text-red-500 text-sm">Gagal memuat notifikasi</div>';
+                    });
+            }
+
+            var bellBtn = document.getElementById('notificationBell');
+            if (bellBtn) {
+                bellBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openNotificationDropdown();
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                var container = document.getElementById('notificationContainer');
+                var dropdown = document.getElementById('notificationDropdown');
+                if (container && dropdown && !container.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    var dropdown = document.getElementById('notificationDropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('hidden');
+                    }
+                }
+            });
 
             fetchOverdueCount();
             setInterval(fetchOverdueCount, 60000);

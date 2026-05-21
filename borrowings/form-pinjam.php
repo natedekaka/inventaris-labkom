@@ -5,7 +5,7 @@ require_once __DIR__ . '/../core/App.php';
 require_once __DIR__ . '/../core/functions.php';
 
 App::requireLogin();
-App::requireRole(['admin', 'lab_assistant', 'guru']);
+App::requireRole(['admin', 'lab_assistant', 'operator']);
 
 $title = 'Form Peminjaman';
 $db = db();

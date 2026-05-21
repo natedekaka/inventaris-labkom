@@ -22,9 +22,10 @@ $borrowings = $borrowStmt->get_result();
 
 $roleLabels = [
     'admin' => 'Admin',
+    'user' => 'User (Siswa)',
+    'viewer' => 'Viewer (Guru)',
     'lab_assistant' => 'Lab Assistant',
-    'guru' => 'Guru',
-    'siswa' => 'Siswa'
+    'operator' => 'Operator'
 ];
 
 ob_start();
