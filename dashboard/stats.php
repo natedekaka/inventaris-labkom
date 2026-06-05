@@ -147,6 +147,55 @@ function getUserOverdueCount($userId) {
     return $result ? $result->fetch_assoc()['total'] : 0;
 }
 
+function getUpcomingMaintenance($days = 7) {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("
+        SELECT m.*, a.kode_aset, a.nama_barang as nama_aset,
+               l.nama_lokasi,
+               DATEDIFF(m.tanggal_maintenance, CURDATE()) as hari_jatuh_tempo
+        FROM maintenances m
+        JOIN assets a ON m.asset_id = a.id
+        LEFT JOIN locations l ON a.location_id = l.id
+        WHERE m.status = 'belum'
+          AND m.tanggal_maintenance <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+        ORDER BY m.tanggal_maintenance ASC
+        LIMIT 10
+    ");
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $list = [];
+    while ($row = $result->fetch_assoc()) {
+        $list[] = $row;
+    }
+    return $list;
+}
+
+function getTotalNilaiAset() {
+    $conn = Database::getInstance()->getConnection();
+    $result = $conn->query("SELECT COALESCE(SUM(harga), 0) as total FROM assets");
+    return $result ? (float)$result->fetch_assoc()['total'] : 0;
+}
+
+function getTotalBiayaMaintenanceTahunIni() {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("SELECT COALESCE(SUM(biaya), 0) as total FROM maintenances WHERE YEAR(tanggal_maintenance) = YEAR(CURDATE()) AND status = 'selesai'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result ? (float)$result->fetch_assoc()['total'] : 0;
+}
+
+function getOverdueMaintenanceCount() {
+    $conn = Database::getInstance()->getConnection();
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as total FROM maintenances 
+        WHERE status = 'belum' AND tanggal_maintenance < CURDATE()
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result ? (int)$result->fetch_assoc()['total'] : 0;
+}
+
 function getUserRecentBorrowings($userId, $limit = 5) {
     $conn = Database::getInstance()->getConnection();
     $stmt = $conn->prepare("

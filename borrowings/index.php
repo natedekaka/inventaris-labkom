@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['approve'])) {
             $update_asset->bind_param('i', $borrowing['asset_id']);
             $update_asset->execute();
         }
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'approve', 'borrowings', $id, 'Menyetujui peminjaman ID: ' . $id);
         App::setFlash('Peminjaman disetujui', 'success');
     } else {
         App::setFlash('Gagal menyetujui', 'danger');
@@ -53,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['reject'])) {
         if ($borrowing) {
             logAssetAction($borrowing['asset_id'], $_SESSION['user_id'], 'borrow_rejected');
         }
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'reject', 'borrowings', $id, 'Menolak peminjaman ID: ' . $id);
         App::setFlash('Peminjaman ditolak', 'success');
     } else {
         App::setFlash('Gagal menolak', 'danger');
@@ -150,26 +152,26 @@ ob_start();
 <div class="max-w-7xl mx-auto px-4">
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-bold text-gray-800">Daftar Peminjaman</h3>
-        <a href="form-pinjam.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Pinjam Aset</a>
+        <a href="form-pinjam.php" class="btn btn-primary">Pinjam Aset</a>
     </div>
 
     <form method="GET" class="mb-4">
         <div class="flex gap-2 mb-2">
-            <input type="text" name="search" placeholder="Cari aset atau peminjam..." class="flex-1 px-4 py-2 border rounded-lg" value="<?= sanitize($search) ?>">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Cari</button>
+            <input type="text" name="search" placeholder="Cari aset atau peminjam..." class="input input-bordered flex-1" value="<?= sanitize($search) ?>">
+            <button type="submit" class="btn btn-primary">Cari</button>
         </div>
         <div class="flex gap-2 items-end">
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Dari Tanggal</label>
-                <input type="date" name="dari_tanggal" class="px-3 py-2 border rounded-lg text-sm" value="<?= sanitize($dari_tanggal) ?>">
+                <input type="date" name="dari_tanggal" class="input input-bordered input-sm" value="<?= sanitize($dari_tanggal) ?>">
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Sampai Tanggal</label>
-                <input type="date" name="sampai_tanggal" class="px-3 py-2 border rounded-lg text-sm" value="<?= sanitize($sampai_tanggal) ?>">
+                <input type="date" name="sampai_tanggal" class="input input-bordered input-sm" value="<?= sanitize($sampai_tanggal) ?>">
             </div>
-            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm">Filter Tanggal</button>
+            <button type="submit" class="btn btn-ghost btn-sm">Filter Tanggal</button>
             <?php if ($dari_tanggal || $sampai_tanggal): ?>
-            <a href="?filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 rounded-lg text-sm">Reset</a>
+            <a href="?filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>" class="btn btn-ghost btn-sm">Reset</a>
             <?php endif; ?>
         </div>
     </form>
@@ -201,61 +203,67 @@ ob_start();
     </div>
 
     <div class="hidden md:block">
-        <div class="bg-white rounded-xl shadow-md mb-8">
+        <div class="card bg-white shadow-md mb-8">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50">
+                <table class="table table-zebra w-full">
+                    <thead>
                         <tr>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aset</th>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Peminjam</th>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pinjam</th>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Rencana Kembali</th>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            <th>Aset</th>
+                            <th>Peminjam</th>
+                            <th>Tanggal Pinjam</th>
+                            <th>Rencana Kembali</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody>
                         <?php foreach ($borrowings_list as $row): ?>
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-4 px-6 text-sm text-gray-900">
+                        <tr>
+                            <td>
                                 <div>
                                     <div class="font-medium"><?= sanitize($row['nama_aset']) ?></div>
                                     <div class="text-xs text-gray-500"><?= sanitize($row['kode_aset']) ?></div>
                                 </div>
                             </td>
-                            <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nama_peminjam']) ?></td>
-                            <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['tanggal_pinjam']) ?></td>
-                            <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['rencana_kembali']) ?></td>
-                            <td class="py-4 px-6">
+                            <td><?= sanitize($row['nama_peminjam']) ?></td>
+                            <td><?= formatTanggal($row['tanggal_pinjam']) ?></td>
+                            <td><?= formatTanggal($row['rencana_kembali']) ?></td>
+                            <td>
                                 <?php
                                 $statusColors = [
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
-                                    'approved' => 'bg-blue-100 text-blue-800',
-                                    'dipinjam' => 'bg-green-100 text-green-800',
-                                    'dikembalikan' => 'bg-gray-100 text-gray-800',
-                                    'rejected' => 'bg-red-100 text-red-800'
+                                    'pending' => 'badge badge-warning',
+                                    'approved' => 'badge badge-info',
+                                    'dipinjam' => 'badge badge-success',
+                                    'dikembalikan' => 'badge badge-ghost',
+                                    'rejected' => 'badge badge-error'
                                 ];
                                 ?>
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusColors[$row['status']] ?? 'bg-gray-100 text-gray-800' ?>">
+                                <span class="<?= $statusColors[$row['status']] ?? 'badge badge-ghost' ?>">
                                     <?= ucfirst($row['status']) ?>
                                 </span>
                             </td>
-                            <td class="py-4 px-6">
+                            <td>
                                 <?php if ($row['status'] === 'pending' && (App::isAdmin() || App::isLabAssistant())): ?>
                                     <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
-                                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block mr-1">Setujui</button>
+                                       class="btn btn-success btn-sm mr-1">Setujui</button>
                                     <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')"
-                                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">Tolak</button>
+                                       class="btn btn-error btn-sm">Tolak</button>
                                 <?php elseif ($row['status'] === 'dipinjam'): ?>
                                     <a href="pengembalian.php?id=<?= $row['id'] ?>" 
-                                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm inline-block">Kembalikan</a>
+                                       class="btn btn-success btn-sm">Kembalikan</a>
                                 <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
                         <?php if (count($borrowings_list) === 0): ?>
                         <tr>
-                            <td colspan="6" class="py-8 px-6 text-center text-gray-500">Tidak ada data peminjaman</td>
+                            <td colspan="7">
+                                <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                                    <i class="fas fa-handshake text-5xl mb-4"></i>
+                                    <p class="text-lg font-medium text-gray-500">Belum ada peminjaman</p>
+                                    <p class="text-sm text-gray-400 mt-1">Belum ada aktivitas peminjaman aset</p>
+                                </div>
+                            </td>
                         </tr>
                         <?php endif; ?>
                     </tbody>
@@ -263,7 +271,10 @@ ob_start();
             </div>
         </div>
         <?php if (count($borrowings_list) === 0): ?>
-        <div class="text-center py-8 text-gray-500">Tidak ada data peminjaman</div>
+        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+            <i class="fas fa-handshake text-5xl mb-4"></i>
+            <p class="text-lg font-medium text-gray-500">Belum ada peminjaman</p>
+        </div>
         <?php endif; ?>
     </div>
 
@@ -277,14 +288,14 @@ ob_start();
                 </div>
                 <?php
                 $statusColors = [
-                    'pending' => 'bg-yellow-100 text-yellow-800',
-                    'approved' => 'bg-blue-100 text-blue-800',
-                    'dipinjam' => 'bg-green-100 text-green-800',
-                    'dikembalikan' => 'bg-gray-100 text-gray-800',
-                    'rejected' => 'bg-red-100 text-red-800'
+                    'pending' => 'badge badge-warning',
+                    'approved' => 'badge badge-info',
+                    'dipinjam' => 'badge badge-success',
+                    'dikembalikan' => 'badge badge-ghost',
+                    'rejected' => 'badge badge-error'
                 ];
                 ?>
-                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusColors[$row['status']] ?? 'bg-gray-100 text-gray-800' ?>">
+                <span class="<?= $statusColors[$row['status']] ?? 'badge badge-ghost' ?>">
                     <?= ucfirst($row['status']) ?>
                 </span>
             </div>
@@ -304,20 +315,26 @@ ob_start();
             </div>
             <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                 <?php if ($row['status'] === 'pending' && (App::isAdmin() || App::isLabAssistant())): ?>
-                    <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">Setujui</button>
-                    <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="flex-1 text-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm">Tolak</button>
+                    <button onclick="openApproveModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="btn btn-success btn-sm flex-1">Setujui</button>
+                    <button onclick="openRejectModal(<?= $row['id'] ?>, '<?= sanitize($row['nama_peminjam']) ?>')" class="btn btn-error btn-sm flex-1">Tolak</button>
                 <?php elseif ($row['status'] === 'dipinjam'): ?>
-                    <a href="pengembalian.php?id=<?= $row['id'] ?>" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">Kembalikan</a>
+                    <a href="pengembalian.php?id=<?= $row['id'] ?>" class="btn btn-success btn-sm flex-1">Kembalikan</a>
                 <?php endif; ?>
             </div>
         </div>
         <?php endforeach; ?>
+        <?php if (count($borrowings_list) === 0): ?>
+        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+            <i class="fas fa-handshake text-5xl mb-4"></i>
+            <p class="text-lg font-medium text-gray-500">Belum ada peminjaman</p>
+        </div>
+        <?php endif; ?>
     </div>
 
     <?php if ($totalPages > 1): ?>
-    <div class="flex gap-2 justify-center mb-8">
+    <div class="join mb-8">
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-        <a href="?page=<?= $i ?>&filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>&dari_tanggal=<?= urlencode($dari_tanggal) ?>&sampai_tanggal=<?= urlencode($sampai_tanggal) ?>" class="px-3 py-1 rounded-lg border <?= $i === $page ? 'bg-blue-50 text-blue-600 font-semibold border-blue-300' : 'border-gray-300 hover:bg-gray-50' ?>">
+        <a href="?page=<?= $i ?>&filter=<?= $status_filter ?>&search=<?= urlencode($search) ?>&dari_tanggal=<?= urlencode($dari_tanggal) ?>&sampai_tanggal=<?= urlencode($sampai_tanggal) ?>" class="join-item btn btn-sm <?= $i === $page ? 'btn-primary' : 'btn-ghost' ?>">
             <?= $i ?>
         </a>
         <?php endfor; ?>
@@ -338,10 +355,10 @@ ob_start();
         <form method="POST" id="actionModalForm">
             <?= App::csrfField() ?>
             <div class="flex gap-2">
-                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium" id="actionModalConfirmBtn">
+                <button type="submit" class="btn btn-success flex-1" id="actionModalConfirmBtn">
                     <i class="fas fa-check mr-1"></i> Ya
                 </button>
-                <button type="button" onclick="closeActionModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+                <button type="button" onclick="closeActionModal()" class="btn btn-ghost flex-1">
                     Batal
                 </button>
             </div>
@@ -355,7 +372,7 @@ function openApproveModal(id, nama) {
     document.getElementById('actionModalTitle').textContent = 'Setujui Peminjaman';
     document.getElementById('actionModalMessage').textContent = 'Apakah Anda yakin ingin menyetujui peminjaman oleh "' + nama + '"?';
     document.getElementById('actionModalIcon').innerHTML = '<i class="fas fa-check text-2xl text-green-600"></i>';
-    document.getElementById('actionModalConfirmBtn').className = 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium';
+    document.getElementById('actionModalConfirmBtn').className = 'btn btn-success flex-1';
     document.getElementById('actionModalConfirmBtn').innerHTML = '<i class="fas fa-check mr-1"></i> Ya, Setujui';
     document.getElementById('approveRejectModal').classList.remove('hidden');
     document.getElementById('approveRejectModal').classList.add('flex');
@@ -366,7 +383,7 @@ function openRejectModal(id, nama) {
     document.getElementById('actionModalTitle').textContent = 'Tolak Peminjaman';
     document.getElementById('actionModalMessage').textContent = 'Apakah Anda yakin ingin menolak peminjaman oleh "' + nama + '"?';
     document.getElementById('actionModalIcon').innerHTML = '<i class="fas fa-times text-2xl text-red-600"></i>';
-    document.getElementById('actionModalConfirmBtn').className = 'flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium';
+    document.getElementById('actionModalConfirmBtn').className = 'btn btn-error flex-1';
     document.getElementById('actionModalConfirmBtn').innerHTML = '<i class="fas fa-times mr-1"></i> Ya, Tolak';
     document.getElementById('approveRejectModal').classList.remove('hidden');
     document.getElementById('approveRejectModal').classList.add('flex');

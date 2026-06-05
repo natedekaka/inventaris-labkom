@@ -23,6 +23,7 @@ $stmt = $db->prepare("DELETE FROM assets WHERE id = ?");
 $stmt->bind_param('i', $id);
 
 if ($stmt->execute()) {
+    logActivity($_SESSION['user_id'], $_SESSION['nama'], 'delete', 'assets', $id, 'Menghapus aset ID: ' . $id);
     App::setFlash('Aset berhasil dihapus', 'success');
 } else {
     App::setFlash('Gagal menghapus aset', 'danger');

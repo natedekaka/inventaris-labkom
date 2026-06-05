@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update_asset->execute();
 
         logAssetAction($borrow['asset_id'], $_SESSION['user_id'], 'returned', ['denda' => $denda]);
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'return', 'borrowings', $id, 'Mengembalikan peminjaman ID: ' . $id);
 
         App::setFlash('Aset berhasil dikembalikan' . ($denda > 0 ? ' dengan denda Rp ' . number_format($denda, 0, ',', '.') : ''), 'success');
         App::redirect('/borrowings/');
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_start();
 ?>
 <div class="max-w-4xl mx-auto px-4">
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Pengembalian Aset</h3>
 
         <div class="mb-6">
@@ -73,7 +74,7 @@ ob_start();
         <form method="POST">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kembali</label>
-                <input type="date" name="tanggal_kembali" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= date('Y-m-d') ?>" required>
+                <input type="date" name="tanggal_kembali" class="input input-bordered w-full" value="<?= date('Y-m-d') ?>" required>
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi Saat Kembali</label>
@@ -93,8 +94,8 @@ ob_start();
                 </div>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">Kembalikan</button>
-                <a href="/borrowings/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Batal</a>
+                <button type="submit" class="btn btn-success">Kembalikan</button>
+                <a href="/borrowings/" class="btn btn-ghost">Batal</a>
             </div>
         </form>
     </div>

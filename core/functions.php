@@ -57,6 +57,18 @@ function generateQRCode($data, $size = 150) {
     return $url;
 }
 
+function logActivity($user_id, $user_name, $action, $table_name, $record_id = null, $description = '') {
+    try {
+        $db = db();
+        $stmt = $db->prepare("INSERT INTO activity_logs (user_id, user_name, action, table_name, record_id, description, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $stmt->bind_param('isssiss', $user_id, $user_name, $action, $table_name, $record_id, $description, $ip);
+        return $stmt->execute();
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
 function logAssetAction($asset_id, $user_id, $action, $details = null) {
     try {
         $db = db();

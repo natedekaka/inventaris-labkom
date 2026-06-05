@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     if ($stmt->execute()) {
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'assets', $db->insert_id, 'Menambahkan aset: ' . $nama_barang);
         App::setFlash('Aset berhasil ditambahkan', 'success');
         App::redirect('/assets/');
     } else {
@@ -101,15 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_start();
 ?>
 <div class="max-w-4xl mx-auto px-4">
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Tambah Aset</h3>
         <form method="POST" enctype="multipart/form-data">
             <?= App::csrfField() ?>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Kode Aset</label>
                 <div class="flex gap-2">
-                    <input type="text" name="kode_aset" id="kode_aset" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($defaultKode) ?>" required maxlength="50" oninput="cekDuplikatKode()">
-                    <button type="button" onclick="generateKodeBaru()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Generate ulang kode otomatis">
+                    <input type="text" name="kode_aset" id="kode_aset" class="input input-bordered flex-1" value="<?= sanitize($defaultKode) ?>" required maxlength="50" oninput="cekDuplikatKode()">
+                    <button type="button" onclick="generateKodeBaru()" class="btn btn-primary btn-sm" title="Generate ulang kode otomatis">
                         <i class="fas fa-sync-alt mr-1"></i>Generate
                     </button>
                 </div>
@@ -119,19 +120,19 @@ ob_start();
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Aset</label>
-                <input type="text" name="nama_barang" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                <input type="text" name="nama_barang" class="input input-bordered w-full" required>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                     <div class="flex gap-2">
-                        <select name="category_id" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                        <select name="category_id" class="select select-bordered flex-1" required>
                             <option value="">Pilih Kategori</option>
                             <?php while ($cat = $categories->fetch_assoc()): ?>
                             <option value="<?= $cat['id'] ?>"><?= sanitize($cat['nama_kategori']) ?></option>
                             <?php endwhile; ?>
                         </select>
-                        <button type="button" onclick="openTambahModal('kategori')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Tambah Kategori Baru">
+                        <button type="button" onclick="openTambahModal('kategori')" class="btn btn-success btn-sm" title="Tambah Kategori Baru">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
@@ -139,13 +140,13 @@ ob_start();
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                     <div class="flex gap-2">
-                        <select name="location_id" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                        <select name="location_id" class="select select-bordered flex-1" required>
                             <option value="">Pilih Lokasi</option>
                             <?php while ($loc = $locations->fetch_assoc()): ?>
                             <option value="<?= $loc['id'] ?>"><?= sanitize($loc['nama_lokasi']) ?></option>
                             <?php endwhile; ?>
                         </select>
-                        <button type="button" onclick="openTambahModal('lokasi')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap" title="Tambah Lokasi Baru">
+                        <button type="button" onclick="openTambahModal('lokasi')" class="btn btn-success btn-sm" title="Tambah Lokasi Baru">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
@@ -154,39 +155,39 @@ ob_start();
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Merek</label>
-                    <input type="text" name="merek" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <input type="text" name="merek" class="input input-bordered w-full">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                    <input type="text" name="model" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <input type="text" name="model" class="input input-bordered w-full">
                 </div>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
-                <input type="text" name="serial_number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <input type="text" name="serial_number" class="input input-bordered w-full">
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Spesifikasi</label>
-                <textarea name="spesifikasi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" rows="3"></textarea>
+                <textarea name="spesifikasi" class="textarea textarea-bordered w-full" rows="3"></textarea>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Harga</label>
-                    <input type="number" name="harga" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <input type="number" name="harga" class="input input-bordered w-full">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Beli</label>
-                    <input type="date" name="tanggal_beli" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= date('Y-m-d') ?>">
+                    <input type="date" name="tanggal_beli" class="input input-bordered w-full" value="<?= date('Y-m-d') ?>">
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Garansi Sampai</label>
-                    <input type="date" name="garansi_sampai" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <input type="date" name="garansi_sampai" class="input input-bordered w-full">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi</label>
-                    <select name="kondisi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <select name="kondisi" class="select select-bordered w-full">
                         <option value="baik">Baik</option>
                         <option value="rusak_ringan">Rusak Ringan</option>
                         <option value="rusak_berat">Rusak Berat</option>
@@ -194,7 +195,7 @@ ob_start();
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <select name="status" class="select select-bordered w-full">
                         <option value="tersedia">Tersedia</option>
                         <option value="dipinjam">Dipinjam</option>
                         <option value="perbaikan">Perbaikan</option>
@@ -203,11 +204,11 @@ ob_start();
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Foto</label>
-                <input type="file" name="foto" class="w-full px-4 py-2 border border-gray-300 rounded-lg" accept="image/*">
+                <input type="file" name="foto" class="file-input file-input-bordered w-full" accept="image/*">
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Simpan</button>
-                <a href="/assets/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Batal</a>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+                <a href="/assets/" class="btn btn-ghost">Batal</a>
             </div>
         </form>
     </div>
@@ -225,15 +226,15 @@ ob_start();
         </div>
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" id="tambahModalLabel">Nama</label>
-            <input type="text" id="tambahModalInput" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none dark:bg-gray-700 dark:text-white" placeholder="Masukkan nama" maxlength="100">
+            <input type="text" id="tambahModalInput" class="input input-bordered w-full" placeholder="Masukkan nama" maxlength="100">
             <p id="tambahModalError" class="text-red-500 text-sm mt-1 hidden"></p>
         </div>
         <input type="hidden" id="tambahModalType" value="">
         <div class="flex gap-2">
-            <button id="tambahModalBtn" onclick="submitTambahModal()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+            <button id="tambahModalBtn" onclick="submitTambahModal()" class="btn btn-success flex-1">
                 <i class="fas fa-save mr-1"></i> Simpan
             </button>
-            <button type="button" onclick="closeTambahModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-medium">
+            <button type="button" onclick="closeTambahModal()" class="btn btn-ghost flex-1">
                 Batal
             </button>
         </div>

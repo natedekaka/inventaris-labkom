@@ -59,10 +59,10 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md mb-8">
+    <div class="card bg-white shadow-md mb-8">
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h4 class="text-lg font-semibold text-gray-800">Riwayat Peminjaman Saya</h4>
-            <a href="/borrowings/peminjaman.php" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200">
+            <a href="/borrowings/peminjaman.php" class="btn btn-primary">
                 <i class="fas fa-plus mr-1"></i>Pinjam Aset
             </a>
         </div>
@@ -90,7 +90,7 @@ ob_start();
                         <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($b['tanggal_pinjam']) ?></td>
                         <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($b['rencana_kembali']) ?></td>
                         <td class="py-4 px-6">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $b['status'] === 'dipinjam' ? 'bg-yellow-100 text-yellow-800' : ($b['status'] === 'dikembalikan' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') ?>">
+                            <span class="badge <?= $b['status'] === 'dipinjam' ? 'badge-warning' : ($b['status'] === 'dikembalikan' ? 'badge-success' : 'badge-ghost') ?>">
                                 <?= sanitize($b['status']) ?>
                             </span>
                         </td>
@@ -112,6 +112,8 @@ ob_start();
     $categoryData = getAssetsByCategory();
     $conditionData = getAssetsByConditionChart();
     $borrowingData = getMonthlyBorrowings(6);
+    $totalNilai = getTotalNilaiAset();
+    $biayaMaintTahun = getTotalBiayaMaintenanceTahunIni();
     ?>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
@@ -160,12 +162,43 @@ ob_start();
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <?php if ($totalNilai > 0 || $biayaMaintTahun > 0): ?>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <?php if ($totalNilai > 0): ?>
         <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Nilai Aset</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1"><?= formatRupiah($totalNilai) ?></p>
+                </div>
+                <div class="bg-emerald-100 p-3 rounded-lg">
+                    <i class="fas fa-money-bill-wave text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php if ($biayaMaintTahun > 0): ?>
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Biaya Maintenance Tahun Ini</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1"><?= formatRupiah($biayaMaintTahun) ?></p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-lg">
+                    <i class="fas fa-tools text-2xl text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="card bg-white shadow-md p-6">
             <h4 class="text-lg font-semibold text-gray-800 mb-4">Aset per Kategori</h4>
             <canvas id="categoryChart"></canvas>
         </div>
-        <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="card bg-white shadow-md p-6">
             <h4 class="text-lg font-semibold text-gray-800 mb-4">Aset per Kondisi</h4>
             <div class="flex justify-center">
                 <canvas id="conditionChart" style="max-height: 280px;"></canvas>
@@ -173,7 +206,7 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h4 class="text-lg font-semibold text-gray-800 mb-4">Peminjaman Bulanan</h4>
         <canvas id="borrowingChart"></canvas>
     </div>
@@ -227,13 +260,13 @@ ob_start();
                     <?php foreach ($overdueBorrowings as $overdue): 
                         $hari = $overdue['hari_terlambat'];
                         if ($hari >= 7) {
-                            $severityClass = 'bg-red-200 text-red-800';
+                            $severityClass = 'badge-error';
                             $severityLabel = $hari . ' hari';
                         } elseif ($hari >= 3) {
-                            $severityClass = 'bg-orange-100 text-orange-800';
+                            $severityClass = 'badge-warning';
                             $severityLabel = $hari . ' hari';
                         } else {
-                            $severityClass = 'bg-yellow-100 text-yellow-800';
+                            $severityClass = 'badge-ghost';
                             $severityLabel = $hari . ' hari';
                         }
                     ?>
@@ -245,7 +278,7 @@ ob_start();
                         </td>
                         <td class="py-2.5 px-3"><?= formatTanggal($overdue['rencana_kembali']) ?></td>
                         <td class="py-2.5 px-3">
-                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full <?= $severityClass ?>">
+                            <span class="badge <?= $severityClass ?>">
                                 <?= $severityLabel ?>
                             </span>
                         </td>
@@ -277,7 +310,86 @@ ob_start();
     </div>
     <?php endif; ?>
 
-    <div class="bg-white rounded-xl shadow-md mb-8">
+    <?php if (in_array($role, ['admin', 'lab_assistant', 'operator'])): 
+        $upcomingMaint = getUpcomingMaintenance(7);
+        $overdueMaintCount = getOverdueMaintenanceCount();
+    ?>
+    <?php if (!empty($upcomingMaint)): ?>
+    <div class="card bg-white shadow-md p-6 mb-8 <?= $overdueMaintCount > 0 ? 'border-l-4 border-red-500' : 'border-l-4 border-blue-500' ?>">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full <?= $overdueMaintCount > 0 ? 'bg-red-100' : 'bg-blue-100' ?> flex items-center justify-center mr-3">
+                    <i class="fas fa-tools <?= $overdueMaintCount > 0 ? 'text-red-600' : 'text-blue-600' ?> text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-800">Maintenance Terjadwal</h4>
+                    <p class="text-sm text-gray-500">
+                        <?php if ($overdueMaintCount > 0): ?>
+                            ⚠️ <strong class="text-red-600"><?= $overdueMaintCount ?> maintenance terlewat!</strong> —
+                        <?php endif; ?>
+                        <?= count($upcomingMaint) ?> jadwal dalam 7 hari ke depan
+                    </p>
+                </div>
+            </div>
+            <a href="/maintenances/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Kelola <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-2 px-3 text-xs font-medium text-gray-500 uppercase">Aset</th>
+                        <th class="py-2 px-3 text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                        <th class="py-2 px-3 text-xs font-medium text-gray-500 uppercase">Jenis</th>
+                        <th class="py-2 px-3 text-xs font-medium text-gray-500 uppercase">Teknisi</th>
+                        <th class="py-2 px-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php foreach ($upcomingMaint as $m): 
+                        $hari = $m['hari_jatuh_tempo'];
+                        if ($hari < 0) {
+                            $badgeClass = 'badge-error';
+                            $label = abs($hari) . ' hari terlewat';
+                        } elseif ($hari === 0) {
+                            $badgeClass = 'badge-warning';
+                            $label = 'Hari ini';
+                        } elseif ($hari <= 2) {
+                            $badgeClass = 'badge-warning badge-outline';
+                            $label = $hari . ' hari lagi';
+                        } else {
+                            $badgeClass = 'badge-info';
+                            $label = $hari . ' hari lagi';
+                        }
+                    ?>
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2.5 px-3">
+                            <div class="font-medium text-gray-900"><?= sanitize($m['nama_aset']) ?></div>
+                            <div class="text-xs text-gray-500"><?= sanitize($m['kode_aset']) ?></div>
+                        </td>
+                        <td class="py-2.5 px-3 text-gray-700"><?= formatTanggal($m['tanggal_maintenance']) ?></td>
+                        <td class="py-2.5 px-3">
+                            <span class="badge <?= $m['jenis'] === 'rutin' ? 'badge-success' : 'badge-secondary' ?>">
+                                <?= ucfirst($m['jenis']) ?>
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-gray-700"><?= sanitize($m['teknisi'] ?? '-') ?></td>
+                        <td class="py-2.5 px-3">
+                            <span class="badge <?= $badgeClass ?>">
+                                <?= $label ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
+
+    <div class="card bg-white shadow-md mb-8">
         <div class="px-6 py-4 border-b border-gray-200">
             <h4 class="text-lg font-semibold text-gray-800">Aset Terbaru</h4>
         </div>
@@ -300,7 +412,7 @@ ob_start();
                         <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($aset['nama_kategori'] ?? '-') ?></td>
                         <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($aset['nama_lokasi'] ?? '-') ?></td>
                         <td class="py-4 px-6">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $aset['status'] === 'tersedia' ? 'bg-green-100 text-green-800' : ($aset['status'] === 'dipinjam' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                            <span class="badge <?= $aset['status'] === 'tersedia' ? 'badge-success' : ($aset['status'] === 'dipinjam' ? 'badge-warning' : 'badge-error') ?>">
                                 <?= sanitize($aset['status']) ?>
                             </span>
                         </td>

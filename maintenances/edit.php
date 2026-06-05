@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $update_asset->execute();
                 }
 
+                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'update', 'maintenances', $id, 'Mengupdate maintenance ID: ' . $id);
                 App::setFlash('Maintenance berhasil diperbarui', 'success');
                 App::redirect('/maintenances/');
             } else {
@@ -74,13 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_start();
 ?>
 <div class="max-w-4xl mx-auto px-4">
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Edit Maintenance - <?= sanitize($maintenance['nama_aset']) ?></h3>
         <form method="POST">
             <?= App::csrfField() ?>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Aset</label>
-                <select name="asset_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                <select name="asset_id" class="select select-bordered w-full" required>
                     <option value="">Pilih Aset</option>
                     <?php while ($a = $assets->fetch_assoc()): ?>
                     <option value="<?= $a['id'] ?>" <?= $a['id'] == $maintenance['asset_id'] ? 'selected' : '' ?>><?= sanitize($a['kode_aset'] . ' - ' . $a['nama_barang']) ?></option>
@@ -89,7 +90,7 @@ ob_start();
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Maintenance</label>
-                <input type="date" name="tanggal_maintenance" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= $maintenance['tanggal_maintenance'] ?>" required>
+                <input type="date" name="tanggal_maintenance" class="input input-bordered w-full" value="<?= $maintenance['tanggal_maintenance'] ?>" required>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Maintenance</label>
@@ -106,16 +107,16 @@ ob_start();
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                <textarea name="deskripsi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" rows="3" required><?= sanitize($maintenance['deskripsi']) ?></textarea>
+                <textarea name="deskripsi" class="textarea textarea-bordered w-full" rows="3" required><?= sanitize($maintenance['deskripsi']) ?></textarea>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Teknisi</label>
-                    <input type="text" name="teknisi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($maintenance['teknisi']) ?>" required>
+                    <input type="text" name="teknisi" class="input input-bordered w-full" value="<?= sanitize($maintenance['teknisi']) ?>" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Biaya</label>
-                    <input type="number" name="biaya" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= $maintenance['biaya'] ?>" step="0.01">
+                    <input type="number" name="biaya" class="input input-bordered w-full" value="<?= $maintenance['biaya'] ?>" step="0.01">
                 </div>
             </div>
             <div class="mb-6">
@@ -132,8 +133,8 @@ ob_start();
                 </div>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Update</button>
-                <a href="/maintenances/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Batal</a>
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/maintenances/" class="btn btn-ghost">Batal</a>
             </div>
         </form>
     </div>

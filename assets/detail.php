@@ -49,7 +49,7 @@ ob_start();
     }
     ?>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 mt-4">
-        <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all duration-200">
+        <div class="card bg-white shadow-md p-5 card-hover transition-all duration-200">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                     <i class="fas fa-exchange-alt text-blue-600 text-xl"></i>
@@ -60,7 +60,7 @@ ob_start();
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all duration-200">
+        <div class="card bg-white shadow-md p-5 card-hover transition-all duration-200">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                     <i class="fas fa-calendar-check text-green-600 text-xl"></i>
@@ -71,7 +71,7 @@ ob_start();
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all duration-200">
+        <div class="card bg-white shadow-md p-5 card-hover transition-all duration-200">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
                     <i class="fas fa-tools text-red-600 text-xl"></i>
@@ -84,7 +84,7 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Detail Aset - <?= sanitize($asset['kode_aset'] . ' - ' . $asset['nama_barang']) ?></h3>
         
         <?php if ($asset['foto']): ?>
@@ -103,29 +103,29 @@ ob_start();
             <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Harga</th><td class="py-3 px-4 text-sm text-gray-900"><?= formatRupiah($asset['harga']) ?></td></tr>
             <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Tanggal Beli</th><td class="py-3 px-4 text-sm text-gray-900"><?= formatTanggal($asset['tanggal_beli']) ?></td></tr>
             <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Kondisi</th><td class="py-3 px-4">
-                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $asset['kondisi'] === 'baik' ? 'bg-green-100 text-green-800' : ($asset['kondisi'] === 'rusak_ringan' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                <span class="badge <?= $asset['kondisi'] === 'baik' ? 'badge-success' : ($asset['kondisi'] === 'rusak_ringan' ? 'badge-warning' : 'badge-error') ?>">
                     <?= sanitize($asset['kondisi']) ?>
                 </span>
             </td></tr>
             <tr class="border-b"><th class="text-left py-3 px-4 w-48 text-sm font-medium text-gray-700">Status</th><td class="py-3 px-4">
-                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $asset['status'] === 'tersedia' ? 'bg-green-100 text-green-800' : ($asset['status'] === 'dipinjam' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                <span class="badge <?= $asset['status'] === 'tersedia' ? 'badge-success' : ($asset['status'] === 'dipinjam' ? 'badge-warning' : 'badge-error') ?>">
                     <?= sanitize($asset['status']) ?>
                 </span>
             </td></tr>
         </table>
         
         <div class="flex gap-2 mt-6">
-            <a href="/assets/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Kembali</a>
-            <a href="edit.php?id=<?= $asset['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition duration-200">Edit</a>
-            <a href="qrcode.php?id=<?= $asset['id'] ?>" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition duration-200">QR Code</a>
-            <a href="qrcode.php?id=<?= $asset['id'] ?>&download=1" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            <a href="/assets/" class="btn btn-ghost">Kembali</a>
+            <a href="edit.php?id=<?= $asset['id'] ?>" class="btn btn-warning">Edit</a>
+            <a href="qrcode.php?id=<?= $asset['id'] ?>" class="btn btn-info">QR Code</a>
+            <a href="qrcode.php?id=<?= $asset['id'] ?>&download=1" class="btn btn-primary">
                 <i class="fas fa-download mr-1"></i>Download QR
             </a>
         </div>
     </div>
 
     <!-- Asset History Timeline -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h4 class="text-lg font-bold text-gray-800 mb-6">Riwayat Aktivitas</h4>
         <?php
         $tableCheck = $db->query("SHOW TABLES LIKE 'asset_logs'");
@@ -191,7 +191,7 @@ ob_start();
     </div>
 
     <!-- Borrowing History -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h4 class="text-lg font-bold text-gray-800 mb-6">Riwayat Peminjaman</h4>
         <?php
         $borrowStmt = $db->prepare("
@@ -207,40 +207,40 @@ ob_start();
         $borrowResult = $borrowStmt->get_result();
         
         $borrowStatusColors = [
-            'pending' => 'bg-yellow-100 text-yellow-800',
-            'approved' => 'bg-blue-100 text-blue-800',
-            'dipinjam' => 'bg-green-100 text-green-800',
-            'dikembalikan' => 'bg-gray-100 text-gray-800',
-            'rejected' => 'bg-red-100 text-red-800'
+            'pending' => 'badge-warning',
+            'approved' => 'badge-info',
+            'dipinjam' => 'badge-success',
+            'dikembalikan' => 'badge-ghost',
+            'rejected' => 'badge-error'
         ];
         ?>
         
         <?php if ($borrowResult && $borrowResult->num_rows > 0): ?>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50">
+                <table class="table table-zebra w-full">
+                    <thead>
                         <tr>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Peminjam</th>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Pinjam</th>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Rencana Kembali</th>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Kembali</th>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Keperluan</th>
+                            <th>Peminjam</th>
+                            <th>Tgl Pinjam</th>
+                            <th>Rencana Kembali</th>
+                            <th>Tgl Kembali</th>
+                            <th>Status</th>
+                            <th>Keperluan</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody>
                         <?php while ($b = $borrowResult->fetch_assoc()): ?>
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($b['peminjam_nama'] ?? '-') ?></td>
-                            <td class="py-3 px-4 text-sm text-gray-900"><?= formatTanggal($b['tanggal_pinjam']) ?></td>
-                            <td class="py-3 px-4 text-sm text-gray-900"><?= formatTanggal($b['rencana_kembali']) ?></td>
-                            <td class="py-3 px-4 text-sm text-gray-900"><?= $b['tanggal_kembali'] ? formatTanggal($b['tanggal_kembali']) : '-' ?></td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $borrowStatusColors[$b['status']] ?? 'bg-gray-100 text-gray-800' ?>">
+                        <tr>
+                            <td><?= sanitize($b['peminjam_nama'] ?? '-') ?></td>
+                            <td><?= formatTanggal($b['tanggal_pinjam']) ?></td>
+                            <td><?= formatTanggal($b['rencana_kembali']) ?></td>
+                            <td><?= $b['tanggal_kembali'] ? formatTanggal($b['tanggal_kembali']) : '-' ?></td>
+                            <td>
+                                <span class="badge <?= $borrowStatusColors[$b['status']] ?? 'badge-ghost' ?>">
                                     <?= ucfirst($b['status']) ?>
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-sm text-gray-900"><?= sanitize($b['keperluan'] ?? '-') ?></td>
+                            <td><?= sanitize($b['keperluan'] ?? '-') ?></td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>

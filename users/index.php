@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
         $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
         $stmt->bind_param('i', $hapus_id);
         if ($stmt->execute()) {
+            logActivity($_SESSION['user_id'], $_SESSION['nama'], 'delete', 'users', $hapus_id, 'Menghapus user ID: ' . $hapus_id);
             App::setFlash('User berhasil dihapus', 'success');
         } else {
             App::setFlash('Gagal menghapus user', 'danger');
@@ -36,28 +37,39 @@ ob_start();
 <div class="max-w-7xl mx-auto px-4">
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-bold text-gray-800">Manajemen User</h3>
-        <a href="tambah.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Tambah User</a>
+        <a href="tambah.php" class="btn btn-primary">Tambah User</a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md mb-8">
+    <div class="card bg-white shadow-md mb-8">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50">
+            <table class="table table-zebra w-full">
+                <thead>
                     <tr>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">NIS</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>NIS</th>
+                        <th>Role</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
+                    <?php if ($result->num_rows === 0): ?>
+                    <tr>
+                        <td colspan="5">
+                            <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                                <i class="fas fa-users text-5xl mb-4"></i>
+                                <p class="text-lg font-medium text-gray-500">Belum ada pengguna</p>
+                                <a href="tambah.php" class="btn btn-primary btn-sm mt-4"><i class="fas fa-plus mr-1"></i>Tambah User</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php else: ?>
                     <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= $row['id'] ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nama']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nis'] ?? '-') ?></td>
-                        <td class="py-4 px-6">
+                    <tr>
+                        <td><?= $row['id'] ?></td>
+                        <td><?= sanitize($row['nama']) ?></td>
+                        <td><?= sanitize($row['nis'] ?? '-') ?></td>
+                        <td>
                             <?php
                             $roleColors = [
                                 'admin' => 'bg-purple-100 text-purple-800',
@@ -68,18 +80,19 @@ ob_start();
                             ];
                             $color = $roleColors[$row['role']] ?? 'bg-gray-100 text-gray-800';
                             ?>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $color ?>">
+                            <span class="badge <?= $color ?>">
                                 <?= ucfirst(str_replace('_', ' ', $row['role'])) ?>
                             </span>
                         </td>
-                        <td class="py-4 px-6">
-                            <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
+                        <td>
+                            <a href="edit.php?id=<?= $row['id'] ?>" class="btn btn-warning btn-sm">Edit</a>
                             <?php if ($row['id'] != $_SESSION['user_id']): ?>
-                            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
+                            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="btn btn-error btn-sm">Hapus</button>
                             <?php endif; ?>
                         </td>
                     </tr>
                     <?php endwhile; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

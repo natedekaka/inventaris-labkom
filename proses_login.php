@@ -2,6 +2,7 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/core/App.php';
 require_once __DIR__ . '/core/Database.php';
+require_once __DIR__ . '/core/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -45,6 +46,7 @@ if ($user = $result->fetch_assoc()) {
         $_SESSION['role'] = $user['role'];
         session_regenerate_id(true);
         session_write_close();
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'login', 'auth', $_SESSION['user_id'], 'User login');
         App::setFlash('Login berhasil', 'success');
         App::redirect('/');
     }

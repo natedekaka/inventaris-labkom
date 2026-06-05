@@ -31,7 +31,7 @@ $roleLabels = [
 ob_start();
 ?>
 <div class="max-w-5xl mx-auto px-4">
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <div class="flex items-center gap-4 mb-6">
             <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                 <i class="fas fa-user text-2xl text-blue-600"></i>
@@ -40,7 +40,7 @@ ob_start();
                 <h3 class="text-xl font-bold text-gray-800"><?= sanitize($user['nama']) ?></h3>
                 <span class="text-sm text-gray-500"><?= $roleLabels[$user['role']] ?? ucfirst($user['role']) ?></span>
             </div>
-            <a href="edit.php" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            <a href="edit.php" class="ml-auto btn btn-primary">
                 <i class="fas fa-edit mr-1"></i>Edit Profil
             </a>
         </div>
@@ -65,7 +65,7 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h4 class="text-lg font-semibold text-gray-800 mb-4">Riwayat Peminjaman</h4>
         <?php if ($borrowings->num_rows > 0): ?>
         <div class="overflow-x-auto">

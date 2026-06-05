@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($update_stmt->execute()) {
+            logActivity($_SESSION['user_id'], $_SESSION['nama'], 'update', 'users', $id, 'Mengupdate user ID: ' . $id);
             App::setFlash('User berhasil diupdate', 'success');
             App::redirect('/users/');
         } else {
@@ -55,21 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_start();
 ?>
 <div class="max-w-4xl mx-auto px-4">
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="card bg-white shadow-md p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Edit User - <?= sanitize($user['nama']) ?></h3>
         <form method="POST">
             <?= App::csrfField() ?>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                <input type="text" name="nama" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($user['nama']) ?>" required>
+                <input type="text" name="nama" class="input input-bordered w-full" value="<?= sanitize($user['nama']) ?>" required>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">NIS (Opsional)</label>
-                <input type="text" name="nis" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" value="<?= sanitize($user['nis'] ?? '') ?>">
+                <input type="text" name="nis" class="input input-bordered w-full" value="<?= sanitize($user['nis'] ?? '') ?>">
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select name="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                <select name="role" class="select select-bordered w-full" required>
                     <option value="user" <?= $user['role'] === 'user' ? 'selected' : '' ?>>User (Siswa)</option>
                     <option value="viewer" <?= $user['role'] === 'viewer' ? 'selected' : '' ?>>Viewer (Guru)</option>
                     <option value="lab_assistant" <?= $user['role'] === 'lab_assistant' ? 'selected' : '' ?>>Lab Assistant</option>
@@ -79,11 +80,11 @@ ob_start();
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru (Kosongkan jika tidak diubah)</label>
-                <input type="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Kosongkan untuk tetap gunakan password lama">
+                <input type="password" name="password" class="input input-bordered w-full" placeholder="Kosongkan untuk tetap gunakan password lama">
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Update</button>
-                <a href="/users/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">Batal</a>
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/users/" class="btn btn-ghost">Batal</a>
             </div>
         </form>
     </div>

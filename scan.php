@@ -33,7 +33,7 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
 <body class="bg-gradient-to-br from-blue-800 to-blue-500 min-h-screen p-5">
     <div class="max-w-2xl mx-auto">
         <!-- Header Card -->
-        <div class="bg-white/95 rounded-3xl p-8 text-center shadow-2xl mb-5">
+        <div class="card bg-white/95 shadow-2xl p-8 text-center mb-5">
             <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-qrcode text-white text-3xl"></i>
             </div>
@@ -42,7 +42,7 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
         </div>
 
         <!-- Scanner Section -->
-        <div class="bg-white/95 rounded-3xl p-6 shadow-2xl mb-5" id="scannerSection">
+        <div class="card bg-white/95 shadow-2xl p-6 mb-5" id="scannerSection">
             <h4 class="text-gray-800 font-semibold mb-4">
                 <i class="fas fa-camera text-blue-600 mr-2"></i>Scanner QR Code
             </h4>
@@ -50,10 +50,10 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
             <div id="reader"></div>
             
             <div class="mt-4 flex gap-2">
-                <button class="bg-gradient-to-r from-blue-800 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold flex-grow hover:-translate-y-0.5 transition-transform" id="startScan">
+                <button class="btn btn-primary flex-grow" id="startScan">
                     <i class="fas fa-video mr-2"></i>Mulai Scan
                 </button>
-                <button class="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-colors" id="stopScan" style="display: none;">
+                <button class="btn btn-error" id="stopScan" style="display: none;">
                     <i class="fas fa-stop mr-2"></i>Stop
                 </button>
             </div>
@@ -63,8 +63,8 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
                     <i class="fas fa-info-circle mr-1"></i>Atau input kode aset manual:
                 </p>
                 <div class="flex gap-2">
-                    <input type="text" id="manualInput" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Masukkan kode aset (INV-001)">
-                    <button class="bg-gradient-to-r from-blue-800 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 transition-transform" id="submitManual">
+                    <input type="text" id="manualInput" class="input input-bordered flex-grow" placeholder="Masukkan kode aset (INV-001)">
+                    <button class="btn btn-primary" id="submitManual">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
@@ -72,9 +72,9 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
         </div>
 
         <!-- Result Section -->
-        <div class="bg-white/95 rounded-3xl p-6 shadow-2xl mb-5 hidden" id="resultSection">
+        <div class="card bg-white/95 shadow-2xl p-6 mb-5 hidden" id="resultSection">
             <div id="resultContent"></div>
-            <button class="bg-gradient-to-r from-blue-800 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold w-full mt-4 hover:-translate-y-0.5 transition-transform" id="btnScanLain">
+            <button class="btn btn-primary w-full mt-4" id="btnScanLain">
                 <i class="fas fa-redo mr-2"></i>Scan Aset Lain
             </button>
         </div>
@@ -170,16 +170,27 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
         }
 
         function checkAssetById(id) {
-            window.location.href = 'assets/detail.php?id=' + id;
+            fetch('assets/check_id.php?id=' + id)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAssetResult(data);
+                    } else {
+                        showError(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Terjadi kesalahan saat memuat data aset.');
+                });
         }
 
         function checkAssetByCode(code) {
-            // AJAX to check asset by code
             fetch('assets/check_kode.php?kode=' + encodeURIComponent(code))
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = 'assets/detail.php?id=' + data.id;
+                        checkAssetById(data.id);
                     } else {
                         showError(data.message);
                     }
@@ -188,6 +199,52 @@ $pageTitle = 'Scan QR Code - Inventaris Lab';
                     console.error('Error:', error);
                     showError('Terjadi kesalahan saat mengecek aset.');
                 });
+        }
+
+        function showAssetResult(data) {
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultSection.classList.remove('hidden');
+            resultContent.innerHTML = `
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check-circle text-green-600 text-4xl"></i>
+                    </div>
+                    <h4 class="text-gray-800 font-bold text-lg mb-1">Aset Ditemukan!</h4>
+                    <p class="text-gray-500 text-sm mb-4">${escapeHtml(data.kode_aset)}</p>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4 text-left">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-500 text-sm">Nama Aset</span>
+                            <span class="text-gray-800 font-semibold text-sm">${escapeHtml(data.nama_barang)}</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-500 text-sm">Status</span>
+                            <span class="badge ${data.status === 'tersedia' ? 'badge-success' : (data.status === 'dipinjam' ? 'badge-warning' : 'badge-error')}">
+                                ${escapeHtml(data.status)}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 text-sm">Kategori</span>
+                            <span class="text-gray-800 text-sm">${escapeHtml(data.kategori || '-')}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <a href="borrowings/form-pinjam.php?asset_id=${data.id}" 
+                           class="btn btn-primary flex-1 text-sm ${data.status !== 'tersedia' ? 'opacity-50 pointer-events-none' : ''}">
+                            <i class="fas fa-handshake mr-1"></i> Pinjam
+                        </a>
+                        <a href="assets/detail.php?id=${data.id}" 
+                           class="btn btn-neutral flex-1 text-sm">
+                            <i class="fas fa-info-circle mr-1"></i> Detail
+                        </a>
+                    </div>
+                    ${data.status !== 'tersedia' ? '<p class="text-xs text-yellow-600 mt-2"><i class="fas fa-exclamation-triangle mr-1"></i>Aset sedang ' + data.status + ', tidak bisa dipinjam</p>' : ''}
+                </div>
+            `;
+            document.getElementById('scannerSection').style.display = 'none';
         }
 
         function showError(message) {

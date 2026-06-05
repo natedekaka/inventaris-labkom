@@ -54,4 +54,25 @@ if ($db->query($sql)) {
     echo "ERROR permissions: " . $db->error . "\n";
 }
 
+$sql = "CREATE TABLE IF NOT EXISTS activity_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    user_name VARCHAR(100) DEFAULT '',
+    action VARCHAR(50) NOT NULL,
+    table_name VARCHAR(50) NOT NULL,
+    record_id INT DEFAULT NULL,
+    description TEXT,
+    ip_address VARCHAR(45) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_table (table_name),
+    INDEX idx_action (action),
+    INDEX idx_created_at (created_at),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+if ($db->query($sql)) {
+    echo "SUCCESS: activity_logs table created.\n";
+} else {
+    echo "ERROR activity_logs: " . $db->error . "\n";
+}
+
 echo "\n✅ Migrasi selesai. Silakan login dengan username: admin | password: admin123\n";

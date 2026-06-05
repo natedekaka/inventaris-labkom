@@ -36,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
                 $update_asset->execute();
             }
 
-            App::setFlash('Maintenance berhasil dihapus', 'success');
+                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'delete', 'maintenances', $hapus_id, 'Menghapus maintenance ID: ' . $hapus_id);
+                App::setFlash('Maintenance berhasil dihapus', 'success');
         } else {
             App::setFlash('Gagal menghapus maintenance', 'danger');
         }
@@ -56,43 +57,54 @@ ob_start();
 <div class="max-w-7xl mx-auto px-4">
 <div class="flex justify-between items-center mb-6">
     <h3 class="text-xl font-bold text-gray-800">Daftar Maintenance</h3>
-    <a href="tambah.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">Tambah Maintenance</a>
+    <a href="tambah.php" class="btn btn-primary">Tambah Maintenance</a>
 </div>
 
 <div class="hidden md:block">
-    <div class="bg-white rounded-xl shadow-md mb-8">
+    <div class="card bg-white shadow-md mb-8">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50">
+            <table class="table table-zebra w-full">
+                <thead>
                     <tr>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aset</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Maintenance</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Teknisi</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Biaya</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th>Aset</th>
+                        <th>Tanggal Maintenance</th>
+                        <th>Jenis</th>
+                        <th>Teknisi</th>
+                        <th>Biaya</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
+                    <?php if (count($maintenances_list) === 0): ?>
+                    <tr>
+                        <td colspan="6">
+                            <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                                <i class="fas fa-tools text-5xl mb-4"></i>
+                                <p class="text-lg font-medium text-gray-500">Belum ada maintenance</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php else: ?>
                     <?php foreach ($maintenances_list as $row): ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['nama_aset']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= formatTanggal($row['tanggal_maintenance']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['jenis']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900"><?= sanitize($row['teknisi']) ?></td>
-                        <td class="py-4 px-6 text-sm text-gray-900">Rp <?= number_format($row['biaya'], 0, ',', '.') ?></td>
-                        <td class="py-4 px-6">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $row['status'] === 'selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
+                    <tr>
+                        <td><?= sanitize($row['nama_aset']) ?></td>
+                        <td><?= formatTanggal($row['tanggal_maintenance']) ?></td>
+                        <td><?= sanitize($row['jenis']) ?></td>
+                        <td><?= sanitize($row['teknisi']) ?></td>
+                        <td>Rp <?= number_format($row['biaya'], 0, ',', '.') ?></td>
+                        <td>
+                            <span class="<?= $row['status'] === 'selesai' ? 'badge badge-success' : 'badge badge-warning' ?>">
                                 <?= sanitize($row['status']) ?>
                             </span>
                         </td>
-                        <td class="py-4 px-6">
-                            <a href="edit.php?id=<?= $row['id'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm inline-block">Edit</a>
-                            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama_aset'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block cursor-pointer">Hapus</button>
+                        <td>
+                            <a href="edit.php?id=<?= $row['id'] ?>" class="btn btn-warning btn-sm">Edit</a>
+                            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama_aset'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="btn btn-error btn-sm">Hapus</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -100,11 +112,17 @@ ob_start();
 </div>
 
 <div class="block md:hidden space-y-3 mb-6">
+    <?php if (count($maintenances_list) === 0): ?>
+    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+        <i class="fas fa-tools text-5xl mb-4"></i>
+        <p class="text-lg font-medium text-gray-500">Belum ada maintenance</p>
+    </div>
+    <?php else: ?>
     <?php foreach ($maintenances_list as $row): ?>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
         <div class="flex justify-between items-start mb-2">
             <p class="font-semibold text-gray-900 dark:text-white"><?= sanitize($row['nama_aset']) ?></p>
-            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $row['status'] === 'selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
+            <span class="<?= $row['status'] === 'selesai' ? 'badge badge-success' : 'badge badge-warning' ?>">
                 <?= sanitize($row['status']) ?>
             </span>
         </div>
@@ -127,11 +145,12 @@ ob_start();
             </div>
         </div>
         <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            <a href="edit.php?id=<?= $row['id'] ?>" class="flex-1 text-center bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg text-sm">Edit</a>
-            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama_aset'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm cursor-pointer">Hapus</button>
+            <a href="edit.php?id=<?= $row['id'] ?>" class="btn btn-warning btn-sm flex-1">Edit</a>
+            <button type="button" data-delete-name="<?= htmlspecialchars($row['nama_aset'], ENT_QUOTES) ?>" onclick="openDeleteModal('index.php', <?= $row['id'] ?>, this.getAttribute('data-delete-name'))" class="btn btn-error btn-sm flex-1">Hapus</button>
         </div>
     </div>
     <?php endforeach; ?>
+    <?php endif; ?>
 </div>
 </div>
 <?php

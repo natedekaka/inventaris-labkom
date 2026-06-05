@@ -85,10 +85,10 @@ foreach ($lines as $lineIndex => $line) {
     $status = 'tersedia';
     $harga = (float)($data['harga'] ?? 0);
     if ($harga < 0) $harga = 0;
-    $keterangan = $data['keterangan'] ?? '';
+    $spesifikasi = $data['keterangan'] ?? '';
 
-    $stmt = $db->prepare("INSERT INTO assets (kode_aset, nama_barang, category_id, location_id, kondisi, status, harga, keterangan, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param('ssssssds', $data['kode_aset'], $data['nama_barang'], $catId, $locId, $kondisi, $status, $harga, $keterangan);
+    $stmt = $db->prepare("INSERT INTO assets (kode_aset, nama_barang, category_id, location_id, kondisi, status, harga, spesifikasi, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->bind_param('ssssssds', $data['kode_aset'], $data['nama_barang'], $catId, $locId, $kondisi, $status, $harga, $spesifikasi);
 
     if ($stmt->execute()) {
         $newId = $stmt->insert_id;
