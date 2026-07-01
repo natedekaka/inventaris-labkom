@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (kode_aset, nama_barang, category_id, merek, model, serial_number, spesifikasi, harga, tanggal_beli, kondisi, status, location_id, foto, garansi_sampai)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param('sisisssdsssisd',
+    $stmt->bind_param('ssissssdsssiss',
         $kode, $nama_barang, $category_id, $merek, $model, $serial_number, $spesifikasi, $harga, $tanggal_beli, $kondisi, $status, $location_id, $foto, $garansi_sampai
     );
 

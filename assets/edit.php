@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt = $db->prepare("UPDATE assets SET kode_aset = ?, nama_barang = ?, category_id = ?, merek = ?, model = ?, serial_number = ?, spesifikasi = ?, harga = ?, kondisi = ?, status = ?, location_id = ?, foto = ? WHERE id = ?");
-    $stmt->bind_param('ssisssdsssisi', $kode_aset, $nama_barang, $category_id, $merek, $model, $serial_number, $spesifikasi, $harga, $kondisi, $status, $location_id, $foto, $id);
+    $stmt->bind_param('ssissssdssisi', $kode_aset, $nama_barang, $category_id, $merek, $model, $serial_number, $spesifikasi, $harga, $kondisi, $status, $location_id, $foto, $id);
 
     if ($stmt->execute()) {
         logActivity($_SESSION['user_id'], $_SESSION['nama'], 'update', 'assets', $id, 'Mengupdate aset: ' . $nama_barang);
