@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 $borrowing_id = $stmt->insert_id;
                 logAssetAction($asset_id, $_SESSION['user_id'], 'borrow_requested', ['borrowing_id' => $borrowing_id]);
-                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'borrowings', $db->insert_id, 'Peminjaman aset oleh ' . $peminjam_nama);
+                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'borrowings', $db->getLastId(), 'Peminjaman aset oleh ' . $peminjam_nama);
                 
                 App::setFlash('Permintaan peminjaman berhasil dikirim, menunggu persetujuan', 'success');
                 App::redirect('/borrowings/');

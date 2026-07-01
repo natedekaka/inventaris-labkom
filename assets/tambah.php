@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     if ($stmt->execute()) {
-        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'assets', $db->insert_id, 'Menambahkan aset: ' . $nama_barang);
+        logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'assets', $db->getLastId(), 'Menambahkan aset: ' . $nama_barang);
         App::setFlash('Aset berhasil ditambahkan', 'success');
         App::redirect('/assets/');
     } else {

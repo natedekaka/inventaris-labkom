@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('ssss', $nama, $nis, $role, $hashedPassword);
 
         if ($stmt->execute()) {
-            logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'users', $db->insert_id, 'Menambahkan user: ' . $nama);
+            logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'users', $db->getLastId(), 'Menambahkan user: ' . $nama);
             App::setFlash('User berhasil ditambahkan', 'success');
             App::redirect('/users/');
         } else {

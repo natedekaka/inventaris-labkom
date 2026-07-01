@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $update_asset->execute();
                 }
 
-                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'maintenances', $db->insert_id, 'Menambahkan maintenance aset');
+                logActivity($_SESSION['user_id'], $_SESSION['nama'], 'create', 'maintenances', $db->getLastId(), 'Menambahkan maintenance aset');
                 App::setFlash('Maintenance berhasil ditambahkan', 'success');
                 App::redirect('/maintenances/');
             } else {
