@@ -111,19 +111,39 @@ function getAssetsConditionByCategory() {
     $result = $conn->query("
         SELECT 
             COALESCE(c.nama_kategori, 'Tanpa Kategori') as kategori,
-            SUM(CASE WHEN a.kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
-            SUM(CASE WHEN a.kondisi = 'rusak_ringan' THEN 1 ELSE 0 END) as rusak_ringan,
-            SUM(CASE WHEN a.kondisi = 'rusak_berat' THEN 1 ELSE 0 END) as rusak_berat,
-            COUNT(*) as total
+            a.kondisi,
+            a.nama_barang
         FROM assets a
         LEFT JOIN categories c ON a.category_id = c.id
-        GROUP BY c.nama_kategori
-        ORDER BY total DESC
+        ORDER BY c.nama_kategori, a.kondisi, a.nama_barang
     ");
-    $data = [];
+    $grouped = [];
     while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
+        $kat = $row['kategori'];
+        $kon = $row['kondisi'];
+        if (!isset($grouped[$kat])) {
+            $grouped[$kat] = ['baik' => [], 'rusak_ringan' => [], 'rusak_berat' => []];
+        }
+        if (isset($grouped[$kat][$kon])) {
+            $grouped[$kat][$kon][] = $row['nama_barang'];
+        }
     }
+    $data = [];
+    foreach ($grouped as $kategori => $conditions) {
+        $total = 0;
+        foreach ($conditions as $list) { $total += count($list); }
+        $data[] = [
+            'kategori' => $kategori,
+            'baik' => count($conditions['baik']),
+            'baik_items' => $conditions['baik'],
+            'rusak_ringan' => count($conditions['rusak_ringan']),
+            'rusak_ringan_items' => $conditions['rusak_ringan'],
+            'rusak_berat' => count($conditions['rusak_berat']),
+            'rusak_berat_items' => $conditions['rusak_berat'],
+            'total' => $total,
+        ];
+    }
+    usort($data, function($a, $b) { return $b['total'] - $a['total']; });
     return $data;
 }
 

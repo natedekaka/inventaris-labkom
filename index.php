@@ -169,7 +169,7 @@ ob_start();
             <i class="fas fa-chart-bar text-primary mr-2"></i> Kondisi Barang per Kategori
         </h4>
         <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full text-left" id="kondisiTable">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
@@ -177,6 +177,7 @@ ob_start();
                         <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Rusak Ringan</th>
                         <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Rusak Berat</th>
                         <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider bg-gray-100">Total</th>
+                        <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Detail</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -208,6 +209,53 @@ ob_start();
                         <td class="py-3 px-4 text-sm text-center font-bold text-gray-900 bg-gray-50">
                             <?= $row['total'] ?>
                         </td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <button onclick="toggleDetail(this)" class="text-blue-600 hover:text-blue-800 text-xs font-medium focus:outline-none">
+                                <i class="fas fa-chevron-down mr-1"></i> Lihat
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="detail-row hidden bg-gray-50">
+                        <td colspan="6" class="py-3 px-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <p class="font-semibold text-green-700 mb-1"><i class="fas fa-check-circle mr-1"></i>Baik (<?= $row['baik'] ?>)</p>
+                                    <?php if (!empty($row['baik_items'])): ?>
+                                        <ul class="list-disc list-inside text-gray-600 space-y-0.5">
+                                        <?php foreach ($row['baik_items'] as $item): ?>
+                                            <li><?= sanitize($item) ?></li>
+                                        <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <p class="text-gray-400 italic">-</p>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-yellow-700 mb-1"><i class="fas fa-exclamation-triangle mr-1"></i>Rusak Ringan (<?= $row['rusak_ringan'] ?>)</p>
+                                    <?php if (!empty($row['rusak_ringan_items'])): ?>
+                                        <ul class="list-disc list-inside text-gray-600 space-y-0.5">
+                                        <?php foreach ($row['rusak_ringan_items'] as $item): ?>
+                                            <li><?= sanitize($item) ?></li>
+                                        <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <p class="text-gray-400 italic">-</p>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-red-700 mb-1"><i class="fas fa-times-circle mr-1"></i>Rusak Berat (<?= $row['rusak_berat'] ?>)</p>
+                                    <?php if (!empty($row['rusak_berat_items'])): ?>
+                                        <ul class="list-disc list-inside text-gray-600 space-y-0.5">
+                                        <?php foreach ($row['rusak_berat_items'] as $item): ?>
+                                            <li><?= sanitize($item) ?></li>
+                                        <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <p class="text-gray-400 italic">-</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -230,11 +278,29 @@ ob_start();
                             </span>
                         </td>
                         <td class="py-3 px-4 text-sm text-center text-gray-900 bg-gray-200"><?= $grandTotal ?></td>
+                        <td class="bg-gray-200"></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
     </div>
+
+    <script>
+    function toggleDetail(btn) {
+        var row = btn.closest('tr').nextElementSibling;
+        while (row && row.classList.contains('detail-row')) {
+            var isHidden = row.classList.contains('hidden');
+            if (isHidden) {
+                row.classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Sembunyi';
+            } else {
+                row.classList.add('hidden');
+                btn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Lihat';
+            }
+            break;
+        }
+    }
+    </script>
 
     <?php if ($totalNilai > 0 || $biayaMaintTahun > 0): ?>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
