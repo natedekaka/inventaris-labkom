@@ -114,6 +114,7 @@ ob_start();
     $borrowingData = getMonthlyBorrowings(6);
     $totalNilai = getTotalNilaiAset();
     $biayaMaintTahun = getTotalBiayaMaintenanceTahunIni();
+    $conditionByCategory = getAssetsConditionByCategory();
     ?>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all duration-300">
@@ -159,6 +160,79 @@ ob_start();
                     <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Kondisi Barang per Kategori -->
+    <div class="card bg-white shadow-md p-6 mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-chart-bar text-primary mr-2"></i> Kondisi Barang per Kategori
+        </h4>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Baik</th>
+                        <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Rusak Ringan</th>
+                        <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider">Rusak Berat</th>
+                        <th class="py-3 px-4 text-xs font-medium text-center text-gray-500 uppercase tracking-wider bg-gray-100">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php 
+                    $grandBaik = 0; $grandRingan = 0; $grandBerat = 0; $grandTotal = 0;
+                    foreach ($conditionByCategory as $row): 
+                        $grandBaik += $row['baik'];
+                        $grandRingan += $row['rusak_ringan'];
+                        $grandBerat += $row['rusak_berat'];
+                        $grandTotal += $row['total'];
+                    ?>
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900"><?= sanitize($row['kategori']) ?></td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <?= $row['baik'] ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <?= $row['rusak_ringan'] ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <?= $row['rusak_berat'] ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center font-bold text-gray-900 bg-gray-50">
+                            <?= $row['total'] ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-100 font-bold">
+                        <td class="py-3 px-4 text-sm text-gray-900">TOTAL</td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-200 text-green-900">
+                                <?= $grandBaik ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-200 text-yellow-900">
+                                <?= $grandRingan ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-200 text-red-900">
+                                <?= $grandBerat ?>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center text-gray-900 bg-gray-200"><?= $grandTotal ?></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 

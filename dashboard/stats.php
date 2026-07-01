@@ -106,6 +106,27 @@ function getAssetsByConditionChart() {
     return ['labels' => $labels, 'data' => $data, 'colors' => $colors];
 }
 
+function getAssetsConditionByCategory() {
+    $conn = Database::getInstance()->getConnection();
+    $result = $conn->query("
+        SELECT 
+            COALESCE(c.nama_kategori, 'Tanpa Kategori') as kategori,
+            SUM(CASE WHEN a.kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
+            SUM(CASE WHEN a.kondisi = 'rusak_ringan' THEN 1 ELSE 0 END) as rusak_ringan,
+            SUM(CASE WHEN a.kondisi = 'rusak_berat' THEN 1 ELSE 0 END) as rusak_berat,
+            COUNT(*) as total
+        FROM assets a
+        LEFT JOIN categories c ON a.category_id = c.id
+        GROUP BY c.nama_kategori
+        ORDER BY total DESC
+    ");
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+    return $data;
+}
+
 function getMonthlyBorrowings($months = 6) {
     $conn = Database::getInstance()->getConnection();
     $stmt = $conn->prepare("
