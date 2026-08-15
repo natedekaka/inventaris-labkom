@@ -1,3 +1,5 @@
+name: inventaris-labkom
+
 services:
   app:
     image: docker.io/library/php:8.2-apache
@@ -21,7 +23,7 @@ services:
     command: >
       bash -c "docker-php-ext-install mysqli pdo pdo_mysql &&
               a2enmod rewrite &&
-              chmod -R 777 /var/www/html/uploads &&
+              mkdir -p /var/www/html/uploads && chmod -R 777 /var/www/html/uploads &&
               apache2-foreground"
 
   db:
